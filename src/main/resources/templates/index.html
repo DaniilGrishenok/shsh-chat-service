@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>WebSocket Chat</title>
+    <!-- Подключаем стили и скрипты через CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.2/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #main-content {
+            margin-bottom: 20px;
+        }
+        #message {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div id="main-content">
+    <div>
+        <label>What is your username?</label>
+        <input type="text" id="username" placeholder="Your username here...">
+        <button id="connect" type="button">Connect</button>
+    </div>
+    <div>
+        <label>User will receive message:</label>
+        <input type="text" id="recipientId" placeholder="Recipient ID...">
+        <input type="text" id="messageContent" placeholder="Your message...">
+        <button id="send" type="button">Send</button>
+    </div>
+</div>
+<div>
+    <label>Message from someone: </label><span id="message"></span>
+</div>
+
+<!-- Встроенный JavaScript -->
+<script>
+    var stompClient = null;
+
+    function connect(username) {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({username: username}, function(frame) {
+            console.log('Web Socket is connected');
+            stompClient.subscribe('/user/queue/messages', function(message) {
+                $("#message").text(message.body);
+            });
+        });
+    }
+
+    $(function() {
+        $("#connect").on('click', function() {
+            var username = $("#username").val();
+            connect(username);
+        });
+
+        $("#send").on('click', function() {
+            var recipientId = $("#recipientId").val();
+            var messageContent = $("#messageContent").val();
+            var message = {
+                content: messageContent,
+                senderId: $("#username").val(),
+                recipientId: recipientId
+            };
+            stompClient.send("/app/send", {}, JSON.stringify(message));
+        });
+    });
+</script>
+
+</body>
+</html>
