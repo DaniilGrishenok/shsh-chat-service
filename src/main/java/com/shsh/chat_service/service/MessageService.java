@@ -1,10 +1,11 @@
 package com.shsh.chat_service.service;
 
-import com.shsh.chat_service.model.Message;
-import com.shsh.chat_service.repository.MessageRepository;
+import com.shsh.chat_service.model.PersonalMessage;
+import com.shsh.chat_service.repository.PersonalMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,12 +14,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageService {
 
-    private final MessageRepository messageRepository;
-
-
-
-    public void saveMessage(Message message) {
-        messageRepository.save(message);
+    private final PersonalMessageRepository personalMessageRepository;
+    @Transactional
+    public void saveMessage(PersonalMessage message) {
+        personalMessageRepository.save(message);
     }
 
 }

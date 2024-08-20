@@ -1,9 +1,10 @@
 package com.shsh.chat_service.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import org.springframework.web.service.annotation.GetExchange;
+
 @Data
+@AllArgsConstructor
 public class CreateOneToOneChatResponse {
     private String chatId;
     private String firstUserId;

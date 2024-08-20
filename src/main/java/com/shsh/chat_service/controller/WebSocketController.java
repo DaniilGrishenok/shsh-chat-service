@@ -1,6 +1,6 @@
 package com.shsh.chat_service.controller;
 
-import com.shsh.chat_service.model.Message;
+import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.service.MessageService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,11 +19,11 @@ public class WebSocketController {
 
     private final MessageService messageService;
     private final SimpMessageSendingOperations messagingTemplate;
-    //private final WebSocketSessionService webSocketSessionService;
+
     // TODO: 15.08.2024 сделать проверки на метод sendmessage()
     @MessageMapping("/send")
-    public void sendMessage(SimpMessageHeaderAccessor sha, @Payload Message message) {
-        System.out.println("Username: "+ Objects.requireNonNull(sha.getUser()).getName());
+    public void sendMessage(@Payload PersonalMessage message) {
+        //        //System.out.println("Username: "+ Objects.requireNonNull(sha.getUser()).getName());
         messageService.saveMessage(message);
         messagingTemplate.convertAndSendToUser(
                 message.getRecipientId(),
@@ -31,11 +31,7 @@ public class WebSocketController {
                 message
         );
     }
-    @PostMapping()
-    @GetMapping("/")
-    public String index() {
-        return "index";
-    }
+
 
 
 }

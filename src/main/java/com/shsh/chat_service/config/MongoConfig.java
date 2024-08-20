@@ -4,8 +4,10 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 
 @Configuration
+@EnableMongoAuditing
 public class MongoConfig extends AbstractMongoClientConfiguration {
 
     @Override
@@ -19,5 +21,11 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
         MongoClient client = MongoClients.create("mongodb://localhost:27017");
         System.out.println("Connected to MongoDB.");
         return client;
+    }
+
+    // Включение аудирования
+    @Override
+    protected boolean autoIndexCreation() {
+        return true; // Создание индексов по умолчанию
     }
 }
