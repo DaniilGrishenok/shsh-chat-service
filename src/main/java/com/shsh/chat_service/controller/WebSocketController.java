@@ -1,5 +1,6 @@
 package com.shsh.chat_service.controller;
 
+import com.shsh.chat_service.dto.PersonalMessageRequest;
 import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.service.MessageService;
 
@@ -22,16 +23,18 @@ public class WebSocketController {
 
     // TODO: 15.08.2024 сделать проверки на метод sendmessage()
     @MessageMapping("/send")
-    public void sendMessage(@Payload PersonalMessage message) {
-        //        //System.out.println("Username: "+ Objects.requireNonNull(sha.getUser()).getName());
-        messageService.saveMessage(message);
+    public void sendMessage(@Payload PersonalMessageRequest message) {
+        messageService.savePersonalMessage(message);
         messagingTemplate.convertAndSendToUser(
                 message.getRecipientId(),
                 "/queue/messages",
                 message
         );
     }
-
+    @GetMapping("/home")
+    public String index() {
+        return "index";
+    }
 
 
 }

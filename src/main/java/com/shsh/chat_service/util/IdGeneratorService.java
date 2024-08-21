@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class IdGenerator {
+public class IdGeneratorService {
 
     // Генерация уникального ID для личного чата на основе ID пользователей
     public String generatePersonalChatId(String user1Id, String user2Id) {
@@ -17,5 +17,9 @@ public class IdGenerator {
     public String generateGroupChatId() {
         // Пример: просто случайный UUID
         return "group-" + UUID.randomUUID().toString();
+    }
+
+    public String generatePersonalMessageId() {
+        return UUID.randomUUID().toString();
     }
 }

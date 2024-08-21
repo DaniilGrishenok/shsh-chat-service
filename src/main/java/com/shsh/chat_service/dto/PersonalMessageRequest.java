@@ -6,9 +6,12 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PersonalMessageRequest {
+
     private String chatId;
-    private String userSenderId;
-    private String userReciptentId;
+    private String senderId;
+    private String nameSender;
+    private String surnameSender;
+    private String recipientId;
     private String content;
 
 }

@@ -1,24 +1,22 @@
 package com.shsh.chat_service.model;
 
-import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
-
+@EqualsAndHashCode(callSuper = true)
 @Document(collection = "personal_messages")
 @Data
-public class PersonalMessage {
+public class PersonalMessage extends Message{
 
-    @Id
-    private String id;
-    private String chatId;
+
     private String senderId;
     private String recipientId;
-    private String senderName;
-    private String recipientName;
     private String content;
-    private Date timestamp;
+
     private MessageStatus status;
+    public PersonalMessage(String messageId){
+        super(messageId);
+    }
 
 }
