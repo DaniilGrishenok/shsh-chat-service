@@ -45,22 +45,24 @@
     </div>
 </div>
 
+
 <script>
     var stompClient = null;
     var chatId = new URLSearchParams(window.location.search).get('chatId');
     var userId = new URLSearchParams(window.location.search).get('userId');
-
+    var recipientId = new URLSearchParams(window.location.search).get('recipientId');
+    console.log('recipientId:', recipientId);
+    console.log('userId:', userId);
     function connect(userId) {
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function(frame) {
             console.log('WebSocket connected');
-
-            // Подписка на личный канал пользователя по userId
-            stompClient.subscribe(`/user/queue/messages`, function(message) {
+            stompClient.subscribe(`/user/${userId}/queue/messages`, function(message) {
+                console.log('Received message:', message.body);
                 var msg = JSON.parse(message.body);
                 if (msg.chatId === chatId) {
-                    displayMessage(msg); // Показываем сообщение, если оно для текущего чата
+                    displayMessage(msg);
                 }
             });
 
@@ -71,7 +73,7 @@
 
     function displayMessage(msg) {
         var messageClass = msg.senderId === userId ? 'sent' : 'received';
-        $('#messages').append('<div class="message ' + messageClass + '"><div class="text">' + msg.content + '</div></div>');
+        $('#messages').append(`<div class="message ${messageClass}"><div class="text">${msg.content}</div></div>`);
     }
 
     function loadMessages() {
@@ -84,20 +86,22 @@
     }
 
     $('#send').click(function () {
+        console.log('recipientId:', recipientId);
+        console.log('userId:', userId);
         var content = $('#message-input').val();
         var message = {
             chatId: chatId,
             content: content,
-            senderId: userId
+            senderId: userId,
+            recipientId: recipientId
         };
         stompClient.send("/app/send", {}, JSON.stringify(message));
         $('#message-input').val('');
     });
 
     $(function() {
-        connect();
+        connect(userId);
     });
 </script>
-
 </body>
 </html>

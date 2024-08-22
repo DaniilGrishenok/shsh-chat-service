@@ -114,12 +114,13 @@
                 var chatList = $("#chats");
                 chatList.empty();
                 response.forEach(function (chat) {
+                    var recipientId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
                     chatList.append(`
-                            <div class="chat-item">
-                                <div>Chat ID: ${chat.id}, Users: ${chat.user1Id}, ${chat.user2Id}</div>
-                                <button class="open-chat-button" data-chat-id="${chat.id}">Open Chat</button>
-                            </div>
-                        `);
+                        <div class="chat-item">
+                            <div>Chat ID: ${chat.id}, Users: ${chat.user1Id}, ${chat.user2Id}</div>
+                            <button class="open-chat-button" data-chat-id="${chat.id}" data-recipient-id="${recipientId}">Open Chat</button>
+                        </div>
+                    `);
                 });
             },
             error: function (error) {
@@ -140,7 +141,15 @@
 
         $("#chats").on('click', '.open-chat-button', function() {
             var chatId = $(this).data('chat-id');
-            window.location.href = `/chat?chatId=${chatId}&userId=${$("#userId").val()}`;
+            var userId = $("#userId").val();
+            var recipientId = $(this).data('recipient-id'); // Получаем recipientId
+
+            if (!recipientId) {
+                console.error('recipientId is not set');
+                return;
+            }
+
+            window.location.href = `/chat?chatId=${chatId}&userId=${userId}&recipientId=${recipientId}`;
         });
     });
 </script>
