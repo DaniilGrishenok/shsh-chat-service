@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
-    <title>WebSocket Chat</title>
-    <!-- Подключаем стили и скрипты через CDN -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.2/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -10,66 +11,138 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        #main-content {
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
             margin-bottom: 20px;
         }
-        #message {
-            font-weight: bold;
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .chat-list {
+            margin-top: 20px;
+        }
+        .chat-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-item:hover {
+            background-color: #e2e6ea;
+        }
+        .open-chat-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .open-chat-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-<div id="main-content">
-    <div>
-        <label>What is your username?</label>
-        <input type="text" id="username" placeholder="Your username here...">
-        <button id="connect" type="button">Connect</button>
+<div class="container">
+    <h1>Chat Application</h1>
+    <div class="form-group">
+        <label for="userId">Enter Your User ID:</label>
+        <input type="text" id="userId" placeholder="Your User ID">
+        <button id="connect">Connect</button>
     </div>
-    <div>
-        <label>User will receive message:</label>
-        <input type="text" id="recipientId" placeholder="Recipient ID...">
-        <input type="text" id="messageContent" placeholder="Your message...">
-        <button id="send" type="button">Send</button>
+    <div class="form-group">
+        <button id="loadChats">Load Chats</button>
+    </div>
+    <div class="chat-list">
+        <h3>Your Chats:</h3>
+        <div id="chats"></div>
     </div>
 </div>
-<div>
-    <label>Message from someone: </label><span id="message"></span>
-</div>
-
-<!-- Встроенный JavaScript -->
 <script>
     var stompClient = null;
 
-    function connect(username) {
+    function connect(userId) {
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
-        stompClient.connect({username: username}, function(frame) {
+        stompClient.connect({"X-User-Id": userId}, function (frame) {
             console.log('Web Socket is connected');
-            stompClient.subscribe('/user/queue/messages', function(message) {
-                $("#message").text(message.body);
+            stompClient.subscribe('/user/queue/messages', function (message) {
+                handleIncomingMessage(JSON.parse(message.body));
             });
+        }, function (error) {
+            console.error('WebSocket connection error: ', error);
+        });
+    }
+
+    function handleIncomingMessage(message) {
+        // Логика для обработки входящих сообщений
+        // Сообщения можно сохранить в localStorage или обновить на странице чата
+    }
+
+    function loadChats() {
+        var userId = $("#userId").val();
+        $.ajax({
+            url: `http://localhost:7878/chats/forUser?userId=${userId}`,
+            method: 'GET',
+            success: function (response) {
+                var chatList = $("#chats");
+                chatList.empty();
+                response.forEach(function (chat) {
+                    chatList.append(`
+                            <div class="chat-item">
+                                <div>Chat ID: ${chat.id}, Users: ${chat.user1Id}, ${chat.user2Id}</div>
+                                <button class="open-chat-button" data-chat-id="${chat.id}">Open Chat</button>
+                            </div>
+                        `);
+                });
+            },
+            error: function (error) {
+                console.error('Error loading chats:', error);
+            }
         });
     }
 
     $(function() {
         $("#connect").on('click', function() {
-            var username = $("#username").val();
-            connect(username);
+            var userId = $("#userId").val();
+            connect(userId);
         });
 
-        $("#send").on('click', function() {
-            var recipientId = $("#recipientId").val();
-            var messageContent = $("#messageContent").val();
-            var message = {
-                content: messageContent,
-                senderId: $("#username").val(),
-                recipientId: recipientId
-            };
-            stompClient.send("/app/send", {}, JSON.stringify(message));
+        $("#loadChats").on('click', function() {
+            loadChats();
+        });
+
+        $("#chats").on('click', '.open-chat-button', function() {
+            var chatId = $(this).data('chat-id');
+            window.location.href = `/chat?chatId=${chatId}&userId=${$("#userId").val()}`;
         });
     });
 </script>
-
 </body>
 </html>

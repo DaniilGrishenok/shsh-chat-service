@@ -1,6 +1,7 @@
 package com.shsh.chat_service.service;
 
 
+import com.shsh.chat_service.dto.ChatDto;
 import com.shsh.chat_service.dto.CreateOneToOneChatResponse;
 import com.shsh.chat_service.exeptions.ChatCreationException;
 import com.shsh.chat_service.model.PersonalChat;
@@ -9,6 +10,9 @@ import com.shsh.chat_service.util.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,4 +50,21 @@ public class ChatService {
             throw new ChatCreationException("Не удалось создать личный чат: ", e);
         }
     }
+
+    public List<ChatDto> getAllChatsForUser(String userId) {
+        List<PersonalChat> chats = personalChatRepository.findByUser1IdOrUser2Id(userId, userId);
+        return chats.stream()
+                .map(this::convertToChatDto)
+                .collect(Collectors.toList());
+    }
+
+    private ChatDto convertToChatDto(PersonalChat chat) {
+        return new ChatDto(
+                chat.getId(),
+                chat.getUser1Id(),
+                chat.getUser2Id(),
+                chat.getCreatedAt()
+        );
+    }
+
 }

@@ -19,7 +19,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setClientLogin("guest")
                 .setClientPasscode("guest")
                 .setSystemLogin("guest")
-                .setSystemPasscode("guest");
+                .setSystemPasscode("guest")
+                .setVirtualHost("/");
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
     }

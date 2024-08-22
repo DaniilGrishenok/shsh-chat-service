@@ -13,7 +13,6 @@ public class IdGeneratorService {
         return user1Id + "-" + user2Id + "-" + UUID.randomUUID().toString();
     }
 
-    // Генерация уникального ID для группового чата
     public String generateGroupChatId() {
         // Пример: просто случайный UUID
         return "group-" + UUID.randomUUID().toString();

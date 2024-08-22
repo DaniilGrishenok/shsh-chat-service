@@ -13,4 +13,6 @@ import java.util.Optional;
 public interface PersonalChatRepository extends MongoRepository<PersonalChat, String> {
 
 
+    // Найти чаты, где пользователь является либо user1, либо user2
+    List<PersonalChat> findByUser1IdOrUser2Id(String user1Id, String user2Id);
 }

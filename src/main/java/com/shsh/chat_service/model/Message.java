@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 @Data
 public abstract class Message {
     @Id
-    private String id;
+    private String messageId;;
     private String chatId;
     private LocalDateTime timestamp;
 
     public Message(String messageId){
         this.timestamp = LocalDateTime.now();
-        this.id = messageId;
+        this.messageId = messageId;
     }
 
 }

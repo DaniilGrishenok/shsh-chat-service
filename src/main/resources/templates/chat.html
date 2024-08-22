@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.2/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chat-box {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .message {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .message .text {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .message.received .text {
+            background-color: #f1f1f1;
+            align-self: flex-start;
+        }
+        .message.sent .text {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+        }
+        #message-input {
+            width: calc(100% - 120px);
+        }
+    </style>
+</head>
+<body>
+<div id="chat-box">
+    <div id="messages"></div>
+    <div>
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send">Send</button>
+    </div>
+</div>
+
+<script>
+    var stompClient = null;
+    var chatId = new URLSearchParams(window.location.search).get('chatId');
+    var userId = new URLSearchParams(window.location.search).get('userId');
+
+    function connect(userId) {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function(frame) {
+            console.log('WebSocket connected');
+
+            // Подписка на личный канал пользователя по userId
+            stompClient.subscribe(`/user/queue/messages`, function(message) {
+                var msg = JSON.parse(message.body);
+                if (msg.chatId === chatId) {
+                    displayMessage(msg); // Показываем сообщение, если оно для текущего чата
+                }
+            });
+
+            // Загрузка старых сообщений после подключения
+            loadMessages();
+        });
+    }
+
+    function displayMessage(msg) {
+        var messageClass = msg.senderId === userId ? 'sent' : 'received';
+        $('#messages').append('<div class="message ' + messageClass + '"><div class="text">' + msg.content + '</div></div>');
+    }
+
+    function loadMessages() {
+        $.get(`/api/getAllMessagesInChat?chatId=${chatId}`, function (data) {
+            $('#messages').empty();
+            data.forEach(function (msg) {
+                displayMessage(msg);
+            });
+        });
+    }
+
+    $('#send').click(function () {
+        var content = $('#message-input').val();
+        var message = {
+            chatId: chatId,
+            content: content,
+            senderId: userId
+        };
+        stompClient.send("/app/send", {}, JSON.stringify(message));
+        $('#message-input').val('');
+    });
+
+    $(function() {
+        connect();
+    });
+</script>
+
+</body>
+</html>
