@@ -45,21 +45,27 @@
     </div>
 </div>
 
-
 <script>
     var stompClient = null;
     var chatId = new URLSearchParams(window.location.search).get('chatId');
-    var userId = new URLSearchParams(window.location.search).get('userId');
     var recipientId = new URLSearchParams(window.location.search).get('recipientId');
-    console.log('recipientId:', recipientId);
-    console.log('userId:', userId);
-    function connect(userId) {
-        var socket = new SockJS('/ws');
+
+    function connect() {
+        var socket = new SockJS('http://localhost:8080/ws');  // Подключение через API Gateway
         stompClient = Stomp.over(socket);
-        stompClient.connect({}, function(frame) {
+
+        var jwtToken = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdXNlcXFAZXhhbXBsZS5jb20iLCJqdGkiOiJ1LXJpM2xpdkR0WkVhdTd0clJkZmh0YWdMNCIsImlhdCI6MTYyOTc4NTMyMiwiZXhwIjoxNzI5ODAzMzIyfQ.SD-asfHqP9k_W2tu58Qz8FoTlyIxQ5AHo0E1-d9n9ew';
+
+        // Заголовки с токеном JWT для WebSocket подключения
+        var headers = {
+            'Authorization': 'Bearer ' + jwtToken  // Передаем JWT токен
+        };
+
+        stompClient.connect(headers, function(frame) {
             console.log('WebSocket connected');
-            stompClient.subscribe(`/user/${userId}/queue/messages`, function(message) {
-                console.log('Received message:', message.body);
+
+            // Подписка на очередь сообщений для текущего пользователя
+            stompClient.subscribe(`/user/queue/messages`, function(message) {
                 var msg = JSON.parse(message.body);
                 if (msg.chatId === chatId) {
                     displayMessage(msg);
@@ -68,10 +74,13 @@
 
             // Загрузка старых сообщений после подключения
             loadMessages();
+        }, function(error) {
+            console.error('WebSocket connection error:', error);
         });
     }
 
     function displayMessage(msg) {
+        var userId = JSON.parse(atob(localStorage.getItem('jwtToken').split('.')[1])).sub; // Извлекаем userId из JWT
         var messageClass = msg.senderId === userId ? 'sent' : 'received';
         $('#messages').append(`<div class="message ${messageClass}"><div class="text">${msg.content}</div></div>`);
     }
@@ -86,8 +95,7 @@
     }
 
     $('#send').click(function () {
-        console.log('recipientId:', recipientId);
-        console.log('userId:', userId);
+        var userId = JSON.parse(atob(localStorage.getItem('jwtToken').split('.')[1])).sub; // Извлекаем userId из JWT
         var content = $('#message-input').val();
         var message = {
             chatId: chatId,
@@ -100,7 +108,7 @@
     });
 
     $(function() {
-        connect(userId);
+        connect();
     });
 </script>
 </body>

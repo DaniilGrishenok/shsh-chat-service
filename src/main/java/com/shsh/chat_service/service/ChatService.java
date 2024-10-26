@@ -25,23 +25,11 @@ public class ChatService {
     @Transactional
     public CreateOneToOneChatResponse createPersonalChat(String firstUserId, String secondUserId) {
         try {
-            // Генерация уникального идентификатора чата для личного чата
             String chatId = idGeneratorService.generatePersonalChatId(firstUserId, secondUserId);
-
-            // Создание нового экземпляра PersonalChat
             PersonalChat chat = new PersonalChat(firstUserId, secondUserId);
-            chat.setId(chatId); // Установка сгенерированного ID
+            chat.setId(chatId);
 
-            // Сохранение чата в репозитории
             personalChatRepository.save(chat);
-
-            // Создание объекта ответа
-            CreateOneToOneChatResponse response = new CreateOneToOneChatResponse(
-                    chat.getId(),
-                    chat.getUser1Id(),
-                    chat.getUser2Id(),
-                    true
-            );
 
 
             return new CreateOneToOneChatResponse(chat.getId(), chat.getUser1Id(), chat.getUser2Id(), true);

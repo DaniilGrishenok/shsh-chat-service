@@ -69,4 +69,8 @@ public class MessageService {
     public List<PersonalMessage> getAllMessagesInChat(String chatId) {
         return personalMessageRepository.findByChatId(chatId);
     }
+    @Transactional(readOnly = true)
+    public List<PersonalMessage> getAllMeвssagesInChat(String chatId) {
+        return personalMessageRepository.findByChatId(chatId);
+    }
 }

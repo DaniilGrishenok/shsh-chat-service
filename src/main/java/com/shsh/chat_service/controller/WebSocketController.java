@@ -39,7 +39,7 @@ public class WebSocketController {
 
     @GetMapping("/home")
     public String index() {
-        return "index";
+        return "a";
     }
 
     @GetMapping("/chat")

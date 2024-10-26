@@ -30,7 +30,12 @@ public class MessageController {
         List<PersonalMessage> messages = messageService.getAllMessagesInChat(chatId);
         return ResponseEntity.ok(messages);
     }
-
+    @GetMapping("/getSentMessages")
+    public ResponseEntity<List<PersonalMessage>> getSentMessagesInPersonalChat(
+            @RequestParam String userId) {
+        List<PersonalMessage> messages = messageService.getAllMessagesInChat(userId);
+        return ResponseEntity.ok(messages);
+    }
 
     @PutMapping("/status/read")
     public ResponseEntity<String> updateMessagesToRead(@RequestBody List<String> messageIds) {

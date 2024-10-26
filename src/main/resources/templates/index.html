@@ -22,16 +22,11 @@
         h1 {
             margin-bottom: 20px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input, button {
+        button {
             padding: 10px;
             margin: 5px 0;
             border: 1px solid #ccc;
             border-radius: 4px;
-        }
-        button {
             background-color: #28a745;
             color: white;
             border: none;
@@ -72,8 +67,6 @@
 <div class="container">
     <h1>Chat Application</h1>
     <div class="form-group">
-        <label for="userId">Enter Your User ID:</label>
-        <input type="text" id="userId" placeholder="Your User ID">
         <button id="connect">Connect</button>
     </div>
     <div class="form-group">
@@ -87,14 +80,27 @@
 <script>
     var stompClient = null;
 
-    function connect(userId) {
-        var socket = new SockJS('/ws');
+    function connect() {
+        var jwtToken = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdXNlcXFAZXhhbXBlLmNvbSIsImp0aSI6IlUtcU5ld3dtamhUeTZDVjBqd2NaaTkzQSIsImlhdCI6MTcyOTc4ODA4NCwiZXhwIjoxNzI5ODA2MDg0fQ.XXm4XFem7wCmsdKeehSvdiecovVNqYvC8b7Afu7xdvA';
+        if (!jwtToken) {
+            console.error('No JWT token found in localStorage');
+            return;
+        }
+
+        var socket = new SockJS('http://localhost:8080/ws');  // Указываем правильный URL
         stompClient = Stomp.over(socket);
-        stompClient.connect({"X-User-Id": userId}, function (frame) {
+
+        // Заголовок с токеном для подключения
+        var headers = {
+            'Authorization': 'Bearer ' + jwtToken
+        };
+
+        stompClient.connect(headers, function (frame) {
             console.log('Web Socket is connected');
-            stompClient.subscribe('/user/queue/messages', function (message) {
+            stompClient.subscribe('/user//queue/messages', function (message) {
                 handleIncomingMessage(JSON.parse(message.body));
             });
+            loadChats();  // Загружаем чаты после подключения
         }, function (error) {
             console.error('WebSocket connection error: ', error);
         });
@@ -102,18 +108,27 @@
 
     function handleIncomingMessage(message) {
         // Логика для обработки входящих сообщений
-        // Сообщения можно сохранить в localStorage или обновить на странице чата
+        console.log('Received message:', message);
     }
 
     function loadChats() {
-        var userId = $("#userId").val();
+        var jwtToken = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdXNlcXFAZXhhbXBsZS5jb20iLCJqdGkiOiJ1LXJpM2xpdkR0WkVhdTd0clJkZmh0YWdMNCIsImlhdCI6MTYyOTc4NTMyMiwiZXhwIjoxNzI5ODAzMzIyfQ.SD-asfHqP9k_W2tu58Qz8FoTlyIxQ5AHo0E1-d9n9ew';
+        if (!jwtToken) {
+            console.error('No JWT token found in localStorage');
+            return;
+        }
+
         $.ajax({
-            url: `http://localhost:7878/chats/forUser?userId=${userId}`,
+            url: `http://localhost:7878/chats/forUser`,
             method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + jwtToken
+            },
             success: function (response) {
                 var chatList = $("#chats");
                 chatList.empty();
                 response.forEach(function (chat) {
+                    var userId = JSON.parse(atob(jwtToken.split('.')[1])).sub; // Получаем userId из токена
                     var recipientId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
                     chatList.append(`
                         <div class="chat-item">
@@ -131,8 +146,7 @@
 
     $(function() {
         $("#connect").on('click', function() {
-            var userId = $("#userId").val();
-            connect(userId);
+            connect();
         });
 
         $("#loadChats").on('click', function() {
@@ -141,7 +155,7 @@
 
         $("#chats").on('click', '.open-chat-button', function() {
             var chatId = $(this).data('chat-id');
-            var userId = $("#userId").val();
+            var userId = JSON.parse(atob(localStorage.getItem('jwtToken').split('.')[1])).sub; // Получаем userId из токена
             var recipientId = $(this).data('recipient-id'); // Получаем recipientId
 
             if (!recipientId) {

@@ -1,7 +1,10 @@
 package com.shsh.chat_service.config;
 
 
+import com.shsh.chat_service.util.JwtUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
@@ -11,6 +14,17 @@ import org.springframework.web.socket.config.annotation.*;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 
+    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
+
+    private final RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
+    public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor, RedisTemplate<String, String> redisTemplate
+                        ) {
+        this.jwtHandshakeInterceptor = jwtHandshakeInterceptor;
+        this.redisTemplate = redisTemplate;
+
+    }
 //    @Override
 //    public void configureMessageBroker(MessageBrokerRegistry config) {
 //        config.enableStompBrokerRelay("/topic", "/queue")
@@ -24,22 +38,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 //        config.setApplicationDestinationPrefixes("/app");
 //        config.setUserDestinationPrefix("/user");
 //    }
-@Override
-public void configureMessageBroker(MessageBrokerRegistry config) {
-    // Включаем встроенный брокер сообщений
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
             config.enableSimpleBroker("/topic", "/queue", "/user");
-            config.setUserDestinationPrefix("/user"); // Задаем префикс для назначения сообщений пользователю
-
-         config.setApplicationDestinationPrefixes("/app"); // Префикс для маршрутизации сообщений приложения
-}
+            config.setUserDestinationPrefix("/user");
+            config.setApplicationDestinationPrefixes("/app");
+    }
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint("/ws")
+                .addInterceptors(jwtHandshakeInterceptor)  // Добавляем интерсептор
+                .setAllowedOriginPatterns("*");
+        registry.addEndpoint("/ws") .addInterceptors(jwtHandshakeInterceptor).setAllowedOriginPatterns("*").withSockJS();
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new UserInterceptor());
+        registration.interceptors(new StompUserInterceptor(redisTemplate));
     }
 }

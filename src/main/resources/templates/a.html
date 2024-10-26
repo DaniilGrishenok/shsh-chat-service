@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket STOMP Client</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+
+<h2>WebSocket STOMP Client</h2>
+
+<div>
+  <h3>JWT Токен:</h3>
+  <input type="text" id="jwtTokenInput" placeholder="Введите JWT токен">
+</div>
+
+<button id="connectBtn">Подключиться</button>
+<button id="disconnectBtn" disabled>Отключиться</button>
+
+<div>
+  <h3>Логи соединения:</h3>
+  <pre id="log"></pre>
+</div>
+
+<div>
+  <h3>Отправить сообщение</h3>
+  <input type="text" id="chatId" placeholder="ID чата">
+  <input type="text" id="recipientId" placeholder="ID получателя">
+  <input type="text" id="content" placeholder="Текст сообщения">
+  <button id="sendMessageBtn">Отправить сообщение</button>
+</div>
+
+<div>
+  <h3>Полученные сообщения:</h3>
+  <pre id="receivedMessages"></pre>
+</div>
+
+<script type="text/javascript">
+  var stompClient = null;
+
+  function log(message) {
+    document.getElementById("log").textContent += message + "\n";
+  }
+
+  // Функция подключения к WebSocket через Gateway
+  function connect() {
+    const jwtToken = document.getElementById("jwtTokenInput").value;  // Получаем JWT токен из поля
+    var socket = new SockJS('http://localhost:8080/ws?token=' + jwtToken);
+    var userId =  'U-pkS_mD66Ro2nqxYYHoQOkg';
+    stompClient = Stomp.over(socket);
+
+    // Передача токена как заголовок Authorization
+    stompClient.connect(
+            { 'Authorization': `Bearer ${jwtToken}` },
+            function (frame) {
+              log('Connected: ' + frame);
+              document.getElementById("connectBtn").disabled = true;
+              document.getElementById("disconnectBtn").disabled = false;
+
+              // Подписка на личные сообщения пользователя
+              stompClient.subscribe('/user/'+ userId +'/queue/messages', function (messageOutput) {
+                var message = JSON.parse(messageOutput.body);
+                log("Received message: " + JSON.stringify(message));
+                displayReceivedMessage(message);  // Отображаем полученное сообщение
+              });
+            },
+            function (error) {
+              log('Error: ' + error);
+            }
+    );
+  }
+
+  function disconnect() {
+    if (stompClient !== null) {
+      stompClient.disconnect();
+    }
+    log("Disconnected");
+    document.getElementById("connectBtn").disabled = false;
+    document.getElementById("disconnectBtn").disabled = true;
+  }
+
+  function sendMessage() {
+    const chatId = document.getElementById("chatId").value;
+    const recipientId = document.getElementById("recipientId").value;
+    const content = document.getElementById("content").value;
+    const jwtToken = document.getElementById("jwtTokenInput").value;  // Получаем JWT токен
+
+    const message = {
+      chatId: chatId,
+      content: content,
+      senderId: jwtToken, // Здесь вы можете указать отправителя, если у вас есть его ID
+      recipientId: recipientId
+    };
+
+    stompClient.send("/app/send", {}, JSON.stringify(message));
+    log("Sent message: " + JSON.stringify(message));
+  }
+
+  function displayReceivedMessage(message) {
+    const receivedMessagesArea = document.getElementById("receivedMessages");
+    receivedMessagesArea.textContent += "От " + message.senderId + ": " + message.content + "\n";
+  }
+
+  document.getElementById("connectBtn").addEventListener("click", connect);
+  document.getElementById("disconnectBtn").addEventListener("click", disconnect);
+  document.getElementById("sendMessageBtn").addEventListener("click", sendMessage);
+
+</script>
+
+</body>
+</html>
