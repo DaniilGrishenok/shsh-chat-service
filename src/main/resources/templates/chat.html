@@ -47,25 +47,22 @@
 
 <script>
     var stompClient = null;
-    var chatId = new URLSearchParams(window.location.search).get('chatId');
-    var recipientId = new URLSearchParams(window.location.search).get('recipientId');
+
+    // Извлечение параметров из URL
+    var urlParams = new URLSearchParams(window.location.search);
+    var userId = urlParams.get('userId');
+    var chatId = urlParams.get('chatId');
+    var recipientId = urlParams.get('recipientId');
 
     function connect() {
-        var socket = new SockJS('http://localhost:8080/ws');  // Подключение через API Gateway
+        var socket = new SockJS('http://localhost:7878/ws');  // Подключение через API Gateway
         stompClient = Stomp.over(socket);
 
-        var jwtToken = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJxdXNlcXFAZXhhbXBsZS5jb20iLCJqdGkiOiJ1LXJpM2xpdkR0WkVhdTd0clJkZmh0YWdMNCIsImlhdCI6MTYyOTc4NTMyMiwiZXhwIjoxNzI5ODAzMzIyfQ.SD-asfHqP9k_W2tu58Qz8FoTlyIxQ5AHo0E1-d9n9ew';
-
-        // Заголовки с токеном JWT для WebSocket подключения
-        var headers = {
-            'Authorization': 'Bearer ' + jwtToken  // Передаем JWT токен
-        };
-
-        stompClient.connect(headers, function(frame) {
+        stompClient.connect({}, function(frame) {
             console.log('WebSocket connected');
 
-            // Подписка на очередь сообщений для текущего пользователя
-            stompClient.subscribe(`/user/queue/messages`, function(message) {
+            // Подписка на очередь для текущего пользователя
+            stompClient.subscribe(`/user/${userId}/queue/messages`, function(message) {
                 var msg = JSON.parse(message.body);
                 if (msg.chatId === chatId) {
                     displayMessage(msg);
@@ -80,7 +77,6 @@
     }
 
     function displayMessage(msg) {
-        var userId = JSON.parse(atob(localStorage.getItem('jwtToken').split('.')[1])).sub; // Извлекаем userId из JWT
         var messageClass = msg.senderId === userId ? 'sent' : 'received';
         $('#messages').append(`<div class="message ${messageClass}"><div class="text">${msg.content}</div></div>`);
     }
@@ -95,7 +91,6 @@
     }
 
     $('#send').click(function () {
-        var userId = JSON.parse(atob(localStorage.getItem('jwtToken').split('.')[1])).sub; // Извлекаем userId из JWT
         var content = $('#message-input').val();
         var message = {
             chatId: chatId,
@@ -108,6 +103,11 @@
     });
 
     $(function() {
+        if (!userId || !chatId || !recipientId) {
+            alert('Missing required parameters in the URL');
+            console.error('Missing parameters:', { userId, chatId, recipientId });
+            return;
+        }
         connect();
     });
 </script>

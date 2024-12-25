@@ -24,7 +24,7 @@ public class ChatController {
         var response = chatService.createPersonalChat(firstUserId, secondUserId);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/forUser")
+    @GetMapping("/allChats")
     public ResponseEntity<List<ChatDto>> getChatsForUser(@RequestParam String userId) {
         List<ChatDto> chats = chatService.getAllChatsForUser(userId);
         return ResponseEntity.ok(chats);

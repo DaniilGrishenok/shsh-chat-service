@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 public class PersonalMessage extends Message{
 
-
     private String senderId;
     private String recipientId;
     private String content;

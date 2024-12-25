@@ -12,8 +12,8 @@
 <h2>WebSocket STOMP Client</h2>
 
 <div>
-  <h3>JWT Токен:</h3>
-  <input type="text" id="jwtTokenInput" placeholder="Введите JWT токен">
+  <h3>User ID:</h3>
+  <input type="text" id="userIdInput" placeholder="Введите ваш User ID">
 </div>
 
 <button id="connectBtn">Подключиться</button>
@@ -44,26 +44,24 @@
     document.getElementById("log").textContent += message + "\n";
   }
 
-  // Функция подключения к WebSocket через Gateway
+  // Функция подключения к WebSocket
   function connect() {
-    const jwtToken = document.getElementById("jwtTokenInput").value;  // Получаем JWT токен из поля
-    var socket = new SockJS('http://localhost:8080/ws?token=' + jwtToken);
-    var userId =  'U-pkS_mD66Ro2nqxYYHoQOkg';
+    const userId = document.getElementById("userIdInput").value; // Получаем User ID из поля
+    var socket = new SockJS('http://localhost:8080/ws');
     stompClient = Stomp.over(socket);
 
-    // Передача токена как заголовок Authorization
     stompClient.connect(
-            { 'Authorization': `Bearer ${jwtToken}` },
+            {},
             function (frame) {
               log('Connected: ' + frame);
               document.getElementById("connectBtn").disabled = true;
               document.getElementById("disconnectBtn").disabled = false;
 
               // Подписка на личные сообщения пользователя
-              stompClient.subscribe('/user/'+ userId +'/queue/messages', function (messageOutput) {
+              stompClient.subscribe('/user/' + userId + '/queue/messages', function (messageOutput) {
                 var message = JSON.parse(messageOutput.body);
                 log("Received message: " + JSON.stringify(message));
-                displayReceivedMessage(message);  // Отображаем полученное сообщение
+                displayReceivedMessage(message); // Отображаем полученное сообщение
               });
             },
             function (error) {
@@ -85,12 +83,11 @@
     const chatId = document.getElementById("chatId").value;
     const recipientId = document.getElementById("recipientId").value;
     const content = document.getElementById("content").value;
-    const jwtToken = document.getElementById("jwtTokenInput").value;  // Получаем JWT токен
 
     const message = {
       chatId: chatId,
       content: content,
-      senderId: jwtToken, // Здесь вы можете указать отправителя, если у вас есть его ID
+      senderId: document.getElementById("userIdInput").value, // Используем введенный User ID как отправителя
       recipientId: recipientId
     };
 

@@ -17,12 +17,9 @@ public class PersonalChat extends Chat{
     private final String user2Id;
 
     public PersonalChat(String user1Id, String user2Id) {
-
         super();
         this.user1Id = user1Id;
         this.user2Id = user2Id;
-
-
     }
 
 
