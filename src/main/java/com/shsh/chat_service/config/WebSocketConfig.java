@@ -47,10 +47,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .addInterceptors(jwtHandshakeInterceptor)  // Добавляем интерсептор
                 .setAllowedOriginPatterns("*");
-        registry.addEndpoint("/ws") .addInterceptors(jwtHandshakeInterceptor).setAllowedOriginPatterns("*").withSockJS();
+
+        registry.addEndpoint("/ws-sockjs")
+                .addInterceptors(jwtHandshakeInterceptor)
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
+
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {

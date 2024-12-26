@@ -7,6 +7,7 @@ import com.shsh.chat_service.exeptions.ChatCreationException;
 import com.shsh.chat_service.model.PersonalChat;
 import com.shsh.chat_service.repository.PersonalChatRepository;
 import com.shsh.chat_service.util.IdGeneratorService;
+import com.shsh.chat_service.util.UserProfileClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,17 +21,26 @@ public class ChatService {
 
     private final PersonalChatRepository personalChatRepository;
     private final IdGeneratorService idGeneratorService;
-
+    private final UserProfileClient userProfileClient;
 
     @Transactional
     public CreateOneToOneChatResponse createPersonalChat(String firstUserId, String secondUserId) {
         try {
+            // Проверяем существование пользователей
+            if (!userProfileClient.checkUserExists(firstUserId) || !userProfileClient.checkUserExists(secondUserId)) {
+                throw new IllegalArgumentException("Один или оба пользователя не существуют.");
+            }
+
+            if (personalChatRepository.findByUserIds(firstUserId, secondUserId).isPresent()) {
+                throw new IllegalStateException("Чат уже существует.");
+            }
+
+
+
             String chatId = idGeneratorService.generatePersonalChatId(firstUserId, secondUserId);
             PersonalChat chat = new PersonalChat(firstUserId, secondUserId);
             chat.setId(chatId);
-
             personalChatRepository.save(chat);
-
 
             return new CreateOneToOneChatResponse(chat.getId(), chat.getUser1Id(), chat.getUser2Id(), true);
 

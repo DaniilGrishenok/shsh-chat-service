@@ -22,6 +22,8 @@ logging:
 jwt:
   secret: 42244938548A0C2C0D9C78995F3A3430C17AB5B206C4DBF1E477A08E47119A99
 eureka:
+  instance:
+    hostname: localhost
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
