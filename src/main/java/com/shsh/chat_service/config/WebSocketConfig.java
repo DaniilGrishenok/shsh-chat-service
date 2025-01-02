@@ -40,7 +40,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
-
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setSendTimeLimit(15000);
+        registration.setSendBufferSizeLimit(512 * 1024);
+        registration.setTimeToFirstMessage(10000);
+    }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {

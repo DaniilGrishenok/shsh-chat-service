@@ -24,37 +24,51 @@ public class StompUserInterceptor implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor stompHeaderAccessor = StompHeaderAccessor.wrap(message);
 
-        // Извлекаем userId из строки запроса
         String userId = stompHeaderAccessor.getSessionAttributes().get("userId") != null ?
-                (String) stompHeaderAccessor.getSessionAttributes().get("userId") :
-                null;
+                (String) stompHeaderAccessor.getSessionAttributes().get("userId") : null;
+        String sessionId = stompHeaderAccessor.getSessionId();
 
-        // Логируем, если не удалось извлечь userId
         if (userId == null) {
-            log.warn("Не удалось извлечь userId из строки запроса. Соединение может быть не авторизовано.");
-        } else {
-            log.info("Извлечен userId: {}", userId);
+            log.warn("Не удалось извлечь userId. Соединение может быть не авторизовано.");
+            return message;
         }
 
-        if (userId != null) {
+        log.info("Извлечен userId: {}, sessionId: {}", userId, sessionId);
+
+        if (sessionId != null) {
             StompCommand stompCommand = stompHeaderAccessor.getCommand();
-            if (stompCommand == StompCommand.CONNECT) {
-                // Логируем успешное подключение
-                log.info("Пользователь с userId {} подключился.", userId);
-                // Соединение установлено, сохраняем информацию о подключении в Redis
-                redisTemplate.opsForValue().set("user:" + userId, "connected");
-                log.debug("Сохранена информация о подключении пользователя в Redis: user:{}", userId);
-            } else if (stompCommand == StompCommand.DISCONNECT) {
-                // Логируем разрыв соединения
-                log.info("Пользователь с userId {} отключился.", userId);
-                // Соединение разорвано, удаляем информацию о пользователе
-                redisTemplate.delete("user:" + userId);
-                log.debug("Удалена информация о пользователе из Redis: user:{}", userId);
-            } else {
-                log.debug("Необрабатываемая команда STOMP: {}", stompCommand);
+            try {
+                switch (stompCommand) {
+                    case CONNECT:
+                        log.info("Пользователь с userId {} подключился. sessionId: {}", userId, sessionId);
+                        redisTemplate.opsForSet().add("user:" + userId + ":sessions", sessionId);
+                        redisTemplate.opsForValue().set("user:" + userId + ":lastPingAt", String.valueOf(System.currentTimeMillis()));
+                        redisTemplate.opsForValue().set("user:" + userId, "online"); // Устанавливаем статус online
+                        break;
+
+                    case DISCONNECT:
+                        log.info("Пользователь с userId {} отключился. sessionId: {}", userId, sessionId);
+                        redisTemplate.opsForSet().remove("user:" + userId + ":sessions", sessionId);
+
+                        Long remainingSessions = redisTemplate.opsForSet().size("user:" + userId + ":sessions");
+                        if (remainingSessions == null || remainingSessions == 0) {
+                            redisTemplate.opsForValue().set("user:" + userId, "offline");
+                            log.info("Пользователь {} помечен как offline", userId);
+                        }
+                        break;
+
+                    default:
+                        redisTemplate.opsForValue().set("user:" + userId + ":lastPingAt", String.valueOf(System.currentTimeMillis()));
+                        redisTemplate.opsForValue().set("user:" + userId, "online"); // Поддерживаем статус online
+                        break;
+                }
+
+            } catch (Exception e) {
+                log.error("Ошибка при обработке события STOMP для userId {} и sessionId {}: {}", userId, sessionId, e.getMessage());
             }
         }
 
         return message;
     }
 }
+
