@@ -89,7 +89,7 @@
             return;
         }
 
-        var socket = new SockJS('http://localhost:7878/ws'); // Указываем правильный URL
+        var socket = new SockJS('http://localhost:7878/ws-sockjs'); // Указываем правильный URL
         stompClient = Stomp.over(socket);
 
         stompClient.connect({}, function (frame) {

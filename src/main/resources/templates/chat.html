@@ -55,26 +55,24 @@
     var recipientId = urlParams.get('recipientId');
 
     function connect() {
-        var socket = new SockJS('http://localhost:7878/ws');  // Подключение через API Gateway
-        stompClient = Stomp.over(socket);
+
+        const socket = new SockJS(`http://localhost:7878/ws-sockjs?userId=${userId}`);
+        const stompClient = Stomp.over(socket);
+        console.log("Connecting with userId:", userId);
 
         stompClient.connect({}, function(frame) {
-            console.log('WebSocket connected');
+            console.log('WebSocket connected as user: ' + userId);
 
-            // Подписка на очередь для текущего пользователя
+            // Подписка на очередь сообщений
             stompClient.subscribe(`/user/${userId}/queue/messages`, function(message) {
-                var msg = JSON.parse(message.body);
-                if (msg.chatId === chatId) {
-                    displayMessage(msg);
-                }
+                const msg = JSON.parse(message.body);
+                console.log("Received message: ", msg);
             });
-
-            // Загрузка старых сообщений после подключения
-            loadMessages();
         }, function(error) {
             console.error('WebSocket connection error:', error);
         });
     }
+
 
     function displayMessage(msg) {
         var messageClass = msg.senderId === userId ? 'sent' : 'received';

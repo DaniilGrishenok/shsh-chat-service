@@ -8,10 +8,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 @Component
 @Log4j2
@@ -25,34 +22,36 @@ public class StompUserInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompHeaderAccessor stompHeaderAccessor = StompHeaderAccessor.wrap(message);
 
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            // Пытаемся извлечь userId из атрибутов WebSocket-сессии
-            Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
-            String userId = sessionAttributes != null ? (String) sessionAttributes.get("userId") : null;
+        // Извлекаем userId из строки запроса
+        String userId = stompHeaderAccessor.getSessionAttributes().get("userId") != null ?
+                (String) stompHeaderAccessor.getSessionAttributes().get("userId") :
+                null;
 
-            // Если userId в атрибутах отсутствует, проверяем заголовок "X-User-Id"
-            if (userId == null) {
-                userId = accessor.getFirstNativeHeader("X-User-Id");
-            }
+        // Логируем, если не удалось извлечь userId
+        if (userId == null) {
+            log.warn("Не удалось извлечь userId из строки запроса. Соединение может быть не авторизовано.");
+        } else {
+            log.info("Извлечен userId: {}", userId);
+        }
 
-            if (userId != null) {
-                accessor.setUser(new User(userId));
-                redisTemplate.opsForValue().set("online:" + userId, "true");
-                log.info("User connected: " + userId);
-                log.info("User added to Redis: " + "online:" + userId);
+        if (userId != null) {
+            StompCommand stompCommand = stompHeaderAccessor.getCommand();
+            if (stompCommand == StompCommand.CONNECT) {
+                // Логируем успешное подключение
+                log.info("Пользователь с userId {} подключился.", userId);
+                // Соединение установлено, сохраняем информацию о подключении в Redis
+                redisTemplate.opsForValue().set("user:" + userId, "connected");
+                log.debug("Сохранена информация о подключении пользователя в Redis: user:{}", userId);
+            } else if (stompCommand == StompCommand.DISCONNECT) {
+                // Логируем разрыв соединения
+                log.info("Пользователь с userId {} отключился.", userId);
+                // Соединение разорвано, удаляем информацию о пользователе
+                redisTemplate.delete("user:" + userId);
+                log.debug("Удалена информация о пользователе из Redis: user:{}", userId);
             } else {
-                log.warn("User ID is null during CONNECT");
-            }
-        } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
-            User user = (User) accessor.getUser();
-            if (user != null) {
-                redisTemplate.delete("online:" + user.getName());
-                log.info("User disconnected: " + user.getName());
-                log.info("User removed from Redis: " + "online:" + user.getName());
-            } else {
-                log.warn("User is null during DISCONNECT");
+                log.debug("Необрабатываемая команда STOMP: {}", stompCommand);
             }
         }
 

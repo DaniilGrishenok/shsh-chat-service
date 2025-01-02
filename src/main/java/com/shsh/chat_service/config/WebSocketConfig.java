@@ -8,36 +8,19 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 
-    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
-
     private final RedisTemplate<String, String> redisTemplate;
 
     @Autowired
-    public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor, RedisTemplate<String, String> redisTemplate
-                        ) {
-        this.jwtHandshakeInterceptor = jwtHandshakeInterceptor;
+    public WebSocketConfig( RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
-
     }
-//    @Override
-//    public void configureMessageBroker(MessageBrokerRegistry config) {
-//        config.enableStompBrokerRelay("/topic", "/queue")
-//                .setRelayHost("localhost")
-//                .setRelayPort(61613)
-//                .setClientLogin("guest")
-//                .setClientPasscode("guest")
-//                .setSystemLogin("guest")
-//                .setSystemPasscode("guest")
-//                .setVirtualHost("/");
-//        config.setApplicationDestinationPrefixes("/app");
-//        config.setUserDestinationPrefix("/user");
-//    }
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
             config.enableSimpleBroker("/topic", "/queue", "/user");
@@ -47,10 +30,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .addInterceptors(new CustomHandshakeInterceptor())
+                .setHandshakeHandler(new DefaultHandshakeHandler())
                 .setAllowedOriginPatterns("*");
 
         registry.addEndpoint("/ws-sockjs")
-                .addInterceptors(jwtHandshakeInterceptor)
+                .addInterceptors(new CustomHandshakeInterceptor())
+                .setHandshakeHandler(new DefaultHandshakeHandler())
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
