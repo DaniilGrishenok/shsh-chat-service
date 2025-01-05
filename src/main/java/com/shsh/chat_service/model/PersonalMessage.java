@@ -12,7 +12,7 @@ public class PersonalMessage extends Message{
     private String senderId;
     private String recipientId;
     private String content;
-
+    private String messageType;
     private MessageStatus status;
     public PersonalMessage(String messageId){
         super(messageId);

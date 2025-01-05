@@ -10,11 +10,19 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 @EnableRedisRepositories
 public class RedisConfig {
 
+//    @Bean
+//    public LettuceConnectionFactory redisConnectionFactory() {
+//        return new LettuceConnectionFactory();
+//    }
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
-    }
 
+        String redisHost = "redis"; // Имя контейнера Redis
+        int redisPort = 6379;       // Порт Redis
+
+        System.out.println("Connecting to Redis at " + redisHost + ":" + redisPort);
+        return new LettuceConnectionFactory(redisHost, redisPort);
+    }
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> template = new RedisTemplate<>();

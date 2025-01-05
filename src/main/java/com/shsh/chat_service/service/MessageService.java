@@ -21,7 +21,7 @@ public class MessageService {
     private final PersonalMessageRepository personalMessageRepository;
     private final IdGeneratorService idGenerator;
     @Transactional
-    public void savePersonalMessage(PersonalMessageRequest request) {
+    public PersonalMessage savePersonalMessage(PersonalMessageRequest request) {
 
         PersonalMessage message = new PersonalMessage(idGenerator.generatePersonalMessageId());
         message.setContent(request.getContent());
@@ -29,10 +29,26 @@ public class MessageService {
         message.setChatId(request.getChatId());
         message.setRecipientId(request.getRecipientId());
         message.setStatus(MessageStatus.SENT);
-
+        message.setMessageType("TEXT");
 
 
         personalMessageRepository.save(message);
+        return message;
+    }
+    @Transactional
+    public PersonalMessage savePhotoPersonalMessage(PersonalMessageRequest request) {
+
+        PersonalMessage photoMessage = new PersonalMessage(idGenerator.generatePersonalMessageId());
+        photoMessage.setContent(request.getContent());
+        photoMessage.setSenderId(request.getSenderId());
+        photoMessage.setChatId(request.getChatId());
+        photoMessage.setRecipientId(request.getRecipientId());
+        photoMessage.setStatus(MessageStatus.SENT);
+        photoMessage.setMessageType("PHOTO");
+
+
+        personalMessageRepository.save(photoMessage);
+        return photoMessage;
     }
     @Transactional
     public void updatePersonalMessageStatusToDelivered(List<String> messagesIds) {

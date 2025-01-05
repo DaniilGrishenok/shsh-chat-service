@@ -1,6 +1,7 @@
 package com.shsh.chat_service.controller;
 
 import com.shsh.chat_service.dto.PersonalMessageRequest;
+import com.shsh.chat_service.model.MessageStatus;
 import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.service.MessageService;
 
@@ -28,15 +29,24 @@ public class WebSocketController {
 
     // TODO: 15.08.2024 сделать проверки на метод sendmessage()
     @MessageMapping("/send")
-    public void sendMessage(@Payload PersonalMessageRequest message) {
-        messageService.savePersonalMessage(message);
+    public void sendMessage(@Payload PersonalMessageRequest messageRequest) {
+        PersonalMessage textMessage = messageService.savePersonalMessage(messageRequest);
         messagingTemplate.convertAndSendToUser(
-                message.getRecipientId(),
+                textMessage.getRecipientId(),
                 "/queue/messages",
-                message
+                textMessage
         );
     }
+    @MessageMapping("/send/photo")
+    public void sendPhotoMessage(@Payload PersonalMessageRequest photoMessageRequest) {
 
+        PersonalMessage photoMessage = messageService.savePhotoPersonalMessage(photoMessageRequest);
+        messagingTemplate.convertAndSendToUser(
+                photoMessage.getRecipientId(),
+                "/queue/messages",
+                photoMessage
+        );
+    }
     @GetMapping("/home")
     public String index() {
         return "index";
@@ -49,7 +59,7 @@ public class WebSocketController {
         return "chat";
     }
 
-    @GetMapping("/api/getAllMessagesInChat")
+    @GetMapping("cs/api/getAllMessagesInChat")
     @ResponseBody
     public List<PersonalMessage> getAllMessagesInPersonalChat(@RequestParam String chatId) {
         return messageService.getAllMessagesInChat(chatId);

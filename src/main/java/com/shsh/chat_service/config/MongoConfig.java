@@ -15,20 +15,20 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
         return "chatdb";
     }
 
-    @Override
-    public MongoClient mongoClient() {
-        System.out.println("Connecting to MongoDB...");
-        MongoClient client = MongoClients.create("mongodb://localhost:27017");
-        System.out.println("Connected to MongoDB.");
-        return client;
-    }
 //    @Override
 //    public MongoClient mongoClient() {
 //        System.out.println("Connecting to MongoDB...");
-//        MongoClient client = MongoClients.create("mongodb://chat-service-db:27017");
+//        MongoClient client = MongoClients.create("mongodb://localhost:27017");
 //        System.out.println("Connected to MongoDB.");
 //        return client;
 //    }
+    @Override
+    public MongoClient mongoClient() {
+        System.out.println("Connecting to MongoDB...");
+        MongoClient client = MongoClients.create("mongodb://chat-service-db:27017");
+        System.out.println("Connected to MongoDB.");
+        return client;
+    }
     @Override
     protected boolean autoIndexCreation() {
         return true; // Создание индексов по умолчанию
