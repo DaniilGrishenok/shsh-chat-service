@@ -36,6 +36,24 @@ public class MessageService {
         return message;
     }
     @Transactional
+    public void deleteMessagesByChatId(String chatId) {
+        try {
+            List<PersonalMessage> messages = personalMessageRepository.findByChatId(chatId);
+
+            if (messages.isEmpty()) {
+                log.warn("Нет сообщений для удаления в чате с ID {}", chatId);
+                return;
+            }
+
+            personalMessageRepository.deleteAll(messages);
+            log.info("Все сообщения из чата с ID {} успешно удалены", chatId);
+        } catch (Exception e) {
+            log.error("Ошибка при удалении сообщений из чата с ID {}", chatId, e);
+            throw new RuntimeException("Ошибка при удалении сообщений: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
     public PersonalMessage savePhotoPersonalMessage(PersonalMessageRequest request) {
 
         PersonalMessage photoMessage = new PersonalMessage(idGenerator.generatePersonalMessageId());

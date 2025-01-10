@@ -13,13 +13,12 @@ import java.util.Set;
 public class InactiveUserMonitor {
 
     private final RedisTemplate<String, String> redisTemplate;
-    private final long INACTIVITY_LIMIT_MS = 30000; // Лимит неактивности (30 секунд)
 
     public InactiveUserMonitor(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
-    @Scheduled(fixedRate = 10000) // Выполнять каждые 10 секунд
+    @Scheduled(fixedRate = 20000)
     public void checkInactiveUsers() {
         log.info("Запуск проверки на неактивных пользователей...");
 
@@ -35,6 +34,8 @@ public class InactiveUserMonitor {
                 String lastPingAt = redisTemplate.opsForValue().get(key);
                 if (lastPingAt != null) {
                     long lastPingTime = Long.parseLong(lastPingAt);
+                    // Лимит неактивности (30 секунд)
+                    long INACTIVITY_LIMIT_MS = 30000;
                     if (currentTime - lastPingTime > INACTIVITY_LIMIT_MS) {
                         String userId = key.split(":")[1];
                         String userStatus = redisTemplate.opsForValue().get("user:" + userId);

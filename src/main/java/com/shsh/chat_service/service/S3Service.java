@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,14 +21,19 @@ import java.io.IOException;
 public class S3Service {
 
     private final AmazonS3 s3Client;
+    private static final Dotenv dotenv = Dotenv.load();
 
 
-    // Retrieve AWS credentials from environment variables
-    String ACCESS_KEY ="1GGQ99IARPI5XJ0YZGTM";
-    String SECRET_KEY ="5DlV4rfBo6VfhDG5BzxmMD1rNVvWB1j2G2YDpY9z";
-    String ENDPOINT = "https://s3.ru1.storage.beget.cloud";
-    String region = "ru1";
-    String BUCKET_NAME = "580647b53aad-shsh-s3";
+    // Инициализируем переменные окружения через Dotenv
+    private String ACCESS_KEY = dotenv.get("AWS_ACCESS_KEY");
+    private String SECRET_KEY = dotenv.get("AWS_SECRET_KEY");
+    private String ENDPOINT = dotenv.get("AWS_ENDPOINT");
+    private String region = dotenv.get("AWS_REGION");
+    private String BUCKET_NAME = dotenv.get("AWS_BUCKET_NAME");//    String ACCESS_KEY ="1GGQ99IARPI5XJ0YZGTM";
+//    String SECRET_KEY ="5DlV4rfBo6VfhDG5BzxmMD1rNVvWB1j2G2YDpY9z";
+//    String ENDPOINT = "https://s3.ru1.storage.beget.cloud";
+//    String region = "ru1";
+//    String BUCKET_NAME = "580647b53aad-shsh-s3";
     public S3Service() {
 
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);

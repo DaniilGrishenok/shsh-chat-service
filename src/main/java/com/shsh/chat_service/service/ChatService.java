@@ -9,6 +9,7 @@ import com.shsh.chat_service.repository.PersonalChatRepository;
 import com.shsh.chat_service.util.IdGeneratorService;
 import com.shsh.chat_service.util.UserProfileClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +18,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class ChatService {
 
     private final PersonalChatRepository personalChatRepository;
     private final IdGeneratorService idGeneratorService;
     private final UserProfileClient userProfileClient;
-
+    private final MessageService messageService;
+    private final PhotoService photoService;
     @Transactional
     public CreateOneToOneChatResponse createPersonalChat(String firstUserId, String secondUserId) {
         try {
@@ -54,6 +57,24 @@ public class ChatService {
         return chats.stream()
                 .map(this::convertToChatDto)
                 .collect(Collectors.toList());
+    }
+    @Transactional
+    public void deleteChat(String chatId) {
+        try {
+            // Удаление сообщений из чата
+            messageService.deleteMessagesByChatId(chatId);
+
+            // Удаление чата
+            personalChatRepository.deleteById(chatId);
+
+            // Удаление фотографий, связанных с чатом
+            //photoService.deletePhotosByChatId(chatId);
+
+            log.info("Чат с ID {} и связанные данные успешно удалены", chatId);
+        } catch (Exception e) {
+            log.error("Ошибка при удалении чата с ID {}", chatId, e);
+            throw new RuntimeException("Ошибка при удалении чата: " + e.getMessage(), e);
+        }
     }
 
     private ChatDto convertToChatDto(PersonalChat chat) {

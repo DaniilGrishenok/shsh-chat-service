@@ -1,7 +1,6 @@
 package com.shsh.chat_service.config;
 
 
-import com.shsh.chat_service.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;

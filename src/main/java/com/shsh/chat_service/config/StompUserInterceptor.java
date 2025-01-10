@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 
+
 @Component
 @Log4j2
 public class StompUserInterceptor implements ChannelInterceptor {
@@ -24,7 +25,7 @@ public class StompUserInterceptor implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor stompHeaderAccessor = StompHeaderAccessor.wrap(message);
 
-        String userId = stompHeaderAccessor.getSessionAttributes().get("userId") != null ?
+        String userId = stompHeaderAccessor.getSessionAttributes() != null ?
                 (String) stompHeaderAccessor.getSessionAttributes().get("userId") : null;
         String sessionId = stompHeaderAccessor.getSessionId();
 
@@ -35,40 +36,69 @@ public class StompUserInterceptor implements ChannelInterceptor {
 
         log.info("Извлечен userId: {}, sessionId: {}", userId, sessionId);
 
+
+        if (isHeartbeat(stompHeaderAccessor, message)) {
+            log.debug("Получено heartbeat от пользователя userId: {}", userId);
+            updateUserActivity(userId);
+            return message;
+        }
+
         if (sessionId != null) {
-            StompCommand stompCommand = stompHeaderAccessor.getCommand();
-            try {
-                switch (stompCommand) {
-                    case CONNECT:
-                        log.info("Пользователь с userId {} подключился. sessionId: {}", userId, sessionId);
-                        redisTemplate.opsForSet().add("user:" + userId + ":sessions", sessionId);
-                        redisTemplate.opsForValue().set("user:" + userId + ":lastPingAt", String.valueOf(System.currentTimeMillis()));
-                        redisTemplate.opsForValue().set("user:" + userId, "online"); // Устанавливаем статус online
-                        break;
-
-                    case DISCONNECT:
-                        log.info("Пользователь с userId {} отключился. sessionId: {}", userId, sessionId);
-                        redisTemplate.opsForSet().remove("user:" + userId + ":sessions", sessionId);
-
-                        Long remainingSessions = redisTemplate.opsForSet().size("user:" + userId + ":sessions");
-                        if (remainingSessions == null || remainingSessions == 0) {
-                            redisTemplate.opsForValue().set("user:" + userId, "offline");
-                            log.info("Пользователь {} помечен как offline", userId);
-                        }
-                        break;
-
-                    default:
-                        redisTemplate.opsForValue().set("user:" + userId + ":lastPingAt", String.valueOf(System.currentTimeMillis()));
-                        redisTemplate.opsForValue().set("user:" + userId, "online"); // Поддерживаем статус online
-                        break;
-                }
-
-            } catch (Exception e) {
-                log.error("Ошибка при обработке события STOMP для userId {} и sessionId {}: {}", userId, sessionId, e.getMessage());
-            }
+            handleStompCommand(userId, sessionId, stompHeaderAccessor.getCommand());
         }
 
         return message;
     }
+
+    private boolean isHeartbeat(StompHeaderAccessor stompHeaderAccessor, Message<?> message) {
+        // Heartbeat - сообщение без команды и пустое тело
+        return stompHeaderAccessor.getCommand() == null &&
+                message.getPayload() instanceof byte[] &&
+                ((byte[]) message.getPayload()).length == 0;
+    }
+
+    private void handleStompCommand(String userId, String sessionId, StompCommand stompCommand) {
+        if (stompCommand == null) {
+            return;
+        }
+
+        switch (stompCommand) {
+            case CONNECT:
+                log.info("Пользователь с userId {} подключился. sessionId: {}", userId, sessionId);
+                setUserOnline(userId, sessionId);
+                break;
+
+            case DISCONNECT:
+                log.info("Пользователь с userId {} отключился. sessionId: {}", userId, sessionId);
+                setUserOffline(userId, sessionId);
+                break;
+
+            default:
+                updateUserActivity(userId);
+                break;
+        }
+    }
+
+    private void setUserOnline(String userId, String sessionId) {
+        redisTemplate.opsForSet().add("user:" + userId + ":sessions", sessionId);
+        redisTemplate.opsForValue().set("user:" + userId + ":lastPingAt", String.valueOf(System.currentTimeMillis()));
+        redisTemplate.opsForValue().set("user:" + userId, "online");
+    }
+
+    private void setUserOffline(String userId, String sessionId) {
+        redisTemplate.opsForSet().remove("user:" + userId + ":sessions", sessionId);
+
+        Long remainingSessions = redisTemplate.opsForSet().size("user:" + userId + ":sessions");
+        if (remainingSessions == null || remainingSessions == 0) {
+            redisTemplate.opsForValue().set("user:" + userId, "offline");
+            log.info("Пользователь {} помечен как offline", userId);
+        }
+    }
+
+    private void updateUserActivity(String userId) {
+        redisTemplate.opsForValue().set("user:" + userId + ":lastPingAt", String.valueOf(System.currentTimeMillis()));
+        redisTemplate.opsForValue().set("user:" + userId, "online");
+    }
 }
+
 

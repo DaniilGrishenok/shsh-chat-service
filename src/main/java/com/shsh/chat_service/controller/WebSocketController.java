@@ -6,9 +6,12 @@ import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.service.MessageService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,12 +25,23 @@ import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
+@Log4j2
 public class WebSocketController {
 
     private final MessageService messageService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    // TODO: 15.08.2024 сделать проверки на метод sendmessage()
+    @MessageMapping("/ping")
+    public void handlePing(@Payload String ping, Message<?> message) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+
+        String userId = accessor.getSessionAttributes() != null
+                ? (String) accessor.getSessionAttributes().get("userId")
+                : "Unknown";
+
+        log.info("Получен ping от пользователя: {}", userId);
+    }
+
     @MessageMapping("/send")
     public void sendMessage(@Payload PersonalMessageRequest messageRequest) {
         PersonalMessage textMessage = messageService.savePersonalMessage(messageRequest);

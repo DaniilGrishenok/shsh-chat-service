@@ -29,6 +29,16 @@ public class ChatController {
         List<ChatDto> chats = chatService.getAllChatsForUser(userId);
         return ResponseEntity.ok(chats);
     }
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<String> deleteChat(@PathVariable String chatId) {
+        try {
+            chatService.deleteChat(chatId);
+            return ResponseEntity.ok("Чат и связанные данные успешно удалены.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при удалении чата: " + e.getMessage());
+        }
+    }
 
 
     //aff3a126-0ecb-4f73-bd37-11a032fb6b82
