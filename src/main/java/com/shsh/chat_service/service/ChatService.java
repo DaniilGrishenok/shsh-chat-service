@@ -31,24 +31,25 @@ public class ChatService {
         try {
             // Проверяем существование пользователей
             if (!userProfileClient.checkUserExists(firstUserId) || !userProfileClient.checkUserExists(secondUserId)) {
-                throw new IllegalArgumentException("Один или оба пользователя не существуют.");
+                return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Один или оба пользователя не существуют.");
             }
 
             if (personalChatRepository.findByUserIds(firstUserId, secondUserId).isPresent()) {
-                throw new IllegalStateException("Чат уже существует.");
+                return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Чат уже существует.");
             }
 
-
-
+            // Генерация ID чата
             String chatId = idGeneratorService.generatePersonalChatId(firstUserId, secondUserId);
             PersonalChat chat = new PersonalChat(firstUserId, secondUserId);
             chat.setId(chatId);
             personalChatRepository.save(chat);
 
-            return new CreateOneToOneChatResponse(chat.getId(), chat.getUser1Id(), chat.getUser2Id(), true);
+            // Возвращаем успешный ответ с ID чата
+            return new CreateOneToOneChatResponse(chat.getId(), chat.getUser1Id(), chat.getUser2Id(), true, null);
 
         } catch (Exception e) {
-            throw new ChatCreationException("Не удалось создать личный чат: ", e);
+            log.error("Ошибка при создании чата: {}", e.getMessage(), e);
+            return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Не удалось создать личный чат: " + e.getMessage());
         }
     }
 
@@ -61,21 +62,18 @@ public class ChatService {
     @Transactional
     public void deleteChat(String chatId) {
         try {
-            // Удаление сообщений из чата
+            photoService.deletePhotosByChatId(chatId);
             messageService.deleteMessagesByChatId(chatId);
-
-            // Удаление чата
             personalChatRepository.deleteById(chatId);
-
-            // Удаление фотографий, связанных с чатом
-            //photoService.deletePhotosByChatId(chatId);
 
             log.info("Чат с ID {} и связанные данные успешно удалены", chatId);
         } catch (Exception e) {
             log.error("Ошибка при удалении чата с ID {}", chatId, e);
+
             throw new RuntimeException("Ошибка при удалении чата: " + e.getMessage(), e);
         }
     }
+
 
     private ChatDto convertToChatDto(PersonalChat chat) {
         return new ChatDto(

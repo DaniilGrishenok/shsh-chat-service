@@ -9,7 +9,7 @@ spring:
       max-request-size: 50MB
   data:
     mongodb:
-      uri: mongodb://root:912345ZV@chat-service-db:27017/chatdb
+      uri: mongodb://localhost:27017/chatdb
       database: chatdb
     redis:
       host: localhost

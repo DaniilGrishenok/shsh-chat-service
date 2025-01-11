@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Service
@@ -21,7 +22,7 @@ public class MessageService {
     private final PersonalMessageRepository personalMessageRepository;
     private final IdGeneratorService idGenerator;
     @Transactional
-    public PersonalMessage savePersonalMessage(PersonalMessageRequest request) {
+    public PersonalMessage savePersonalMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
 
         PersonalMessage message = new PersonalMessage(idGenerator.generatePersonalMessageId());
         message.setContent(request.getContent());
@@ -52,9 +53,30 @@ public class MessageService {
             throw new RuntimeException("Ошибка при удалении сообщений: " + e.getMessage(), e);
         }
     }
-
     @Transactional
-    public PersonalMessage savePhotoPersonalMessage(PersonalMessageRequest request) {
+    public void deleteMessagesByIds(List<String> messageIds) {
+        try {
+            if (messageIds == null || messageIds.isEmpty()) {
+                log.warn("Пустой список ID сообщений для удаления");
+                return;
+            }
+
+            List<PersonalMessage> messages = personalMessageRepository.findAllById(messageIds);
+
+            if (messages.isEmpty()) {
+                log.warn("Нет сообщений для удаления с указанными ID {}", messageIds);
+                return;
+            }
+
+            personalMessageRepository.deleteAll(messages);
+            log.info("Сообщения с ID {} успешно удалены", messageIds);
+        } catch (Exception e) {
+            log.error("Ошибка при удалении сообщений с ID {}", messageIds, e);
+            throw new RuntimeException("Ошибка при удалении сообщений: " + e.getMessage(), e);
+        }
+    }
+    @Transactional
+    public PersonalMessage savePhotoPersonalMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
 
         PersonalMessage photoMessage = new PersonalMessage(idGenerator.generatePersonalMessageId());
         photoMessage.setContent(request.getContent());

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
 
@@ -43,7 +44,7 @@ public class WebSocketController {
     }
 
     @MessageMapping("/send")
-    public void sendMessage(@Payload PersonalMessageRequest messageRequest) {
+    public void sendMessage(@Payload PersonalMessageRequest messageRequest) throws NoSuchAlgorithmException {
         PersonalMessage textMessage = messageService.savePersonalMessage(messageRequest);
         messagingTemplate.convertAndSendToUser(
                 textMessage.getRecipientId(),
@@ -52,7 +53,7 @@ public class WebSocketController {
         );
     }
     @MessageMapping("/send/photo")
-    public void sendPhotoMessage(@Payload PersonalMessageRequest photoMessageRequest) {
+    public void sendPhotoMessage(@Payload PersonalMessageRequest photoMessageRequest) throws NoSuchAlgorithmException {
 
         PersonalMessage photoMessage = messageService.savePhotoPersonalMessage(photoMessageRequest);
         messagingTemplate.convertAndSendToUser(

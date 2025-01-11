@@ -21,15 +21,16 @@ public class ChatController {
     public ResponseEntity<CreateOneToOneChatResponse> createOneToOneChat(@RequestBody CreateOneToOneChatRequest request){
         var firstUserId = request.getFirstUserId();
         var secondUserId = request.getSecondUserId();
-        var response = chatService.createPersonalChat(firstUserId, secondUserId);
+        CreateOneToOneChatResponse response = chatService.createPersonalChat(firstUserId, secondUserId);
+
+        if (!response.isChatCreated()) {
+            return ResponseEntity.badRequest().body(response);
+        }
+
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/allChats")
-    public ResponseEntity<List<ChatDto>> getChatsForUser(@RequestParam String userId) {
-        List<ChatDto> chats = chatService.getAllChatsForUser(userId);
-        return ResponseEntity.ok(chats);
-    }
-    @DeleteMapping("/{chatId}")
+
+    @DeleteMapping("/deleteChat/{chatId}")
     public ResponseEntity<String> deleteChat(@PathVariable String chatId) {
         try {
             chatService.deleteChat(chatId);
@@ -39,9 +40,12 @@ public class ChatController {
                     .body("Ошибка при удалении чата: " + e.getMessage());
         }
     }
+    @GetMapping("/allChats")
+    public ResponseEntity<List<ChatDto>> getChatsForUser(@RequestParam String userId) {
+        List<ChatDto> chats = chatService.getAllChatsForUser(userId);
+        return ResponseEntity.ok(chats);
+    }
 
-
-    //aff3a126-0ecb-4f73-bd37-11a032fb6b82
 
 
 }

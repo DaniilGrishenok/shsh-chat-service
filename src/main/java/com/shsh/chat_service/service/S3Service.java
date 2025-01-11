@@ -29,11 +29,7 @@ public class S3Service {
     private String SECRET_KEY = dotenv.get("AWS_SECRET_KEY");
     private String ENDPOINT = dotenv.get("AWS_ENDPOINT");
     private String region = dotenv.get("AWS_REGION");
-    private String BUCKET_NAME = dotenv.get("AWS_BUCKET_NAME");//    String ACCESS_KEY ="1GGQ99IARPI5XJ0YZGTM";
-//    String SECRET_KEY ="5DlV4rfBo6VfhDG5BzxmMD1rNVvWB1j2G2YDpY9z";
-//    String ENDPOINT = "https://s3.ru1.storage.beget.cloud";
-//    String region = "ru1";
-//    String BUCKET_NAME = "580647b53aad-shsh-s3";
+    private String BUCKET_NAME = dotenv.get("AWS_BUCKET_NAME");
     public S3Service() {
 
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);

@@ -14,7 +14,15 @@ import java.util.List;
 public class MessageController {
 
  private final MessageService messageService;
-
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteMessages(@RequestBody List<String> messageIds) {
+        try {
+            messageService.deleteMessagesByIds(messageIds);
+            return ResponseEntity.ok("Сообщения успешно удалены");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body("Ошибка при удалении сообщений: " + e.getMessage());
+        }
+    }
     @PutMapping("/status/delivered")
     public ResponseEntity<String> updateMessagesToDelivered(@RequestBody List<String> messageIds) {
         try {
