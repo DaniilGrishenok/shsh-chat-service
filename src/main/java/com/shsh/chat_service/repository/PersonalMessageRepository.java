@@ -17,4 +17,6 @@ public interface PersonalMessageRepository extends MongoRepository<PersonalMessa
     @Query("{ '_id': { $in: ?1 } }")
     void updateStatusByIdIn(List<String> ids, MessageStatus status);
     List<PersonalMessage> findByChatId(String chatId);
+    List<PersonalMessage> findByChatIdAndMessageType(String chatId, String messageType);
+
 }

@@ -3,8 +3,11 @@ package com.shsh.chat_service.controller;
 import com.shsh.chat_service.dto.ChatDto;
 import com.shsh.chat_service.dto.CreateOneToOneChatRequest;
 import com.shsh.chat_service.dto.CreateOneToOneChatResponse;
+import com.shsh.chat_service.dto.MediaResponseDTO;
 import com.shsh.chat_service.service.ChatService;
+import com.shsh.chat_service.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -15,8 +18,29 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/chats")
+@Log4j2
 public class ChatController {
     private final ChatService chatService;
+    private final MessageService messageService;
+    @GetMapping("/{chatId}/photos")
+    public ResponseEntity<List<MediaResponseDTO>> getChatPhotos(@PathVariable String chatId) {
+        try {
+
+            List<MediaResponseDTO> photos = messageService.getPhotosByChatId(chatId);
+
+            if (photos.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+
+            return ResponseEntity.ok(photos);
+
+        } catch (Exception e) {
+
+            log.error("Ошибка при получении фотографий для чата {}: {}", chatId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
+    }
     @PostMapping("/createOneToOneChat")
     public ResponseEntity<CreateOneToOneChatResponse> createOneToOneChat(@RequestBody CreateOneToOneChatRequest request){
         var firstUserId = request.getFirstUserId();

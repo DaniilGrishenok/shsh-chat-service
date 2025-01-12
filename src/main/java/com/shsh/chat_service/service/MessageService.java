@@ -1,5 +1,6 @@
 package com.shsh.chat_service.service;
 
+import com.shsh.chat_service.dto.MediaResponseDTO;
 import com.shsh.chat_service.dto.PersonalMessageRequest;
 import com.shsh.chat_service.model.MessageStatus;
 import com.shsh.chat_service.model.PersonalMessage;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 
@@ -36,6 +38,23 @@ public class MessageService {
         personalMessageRepository.save(message);
         return message;
     }
+    @Transactional(readOnly = true)
+    public List<MediaResponseDTO> getPhotosByChatId(String chatId) {
+        // Извлекаем только сообщения с типом PHOTO
+        List<PersonalMessage> photoMessages = personalMessageRepository.findByChatIdAndMessageType(chatId, "PHOTO");
+
+        // Конвертируем их в MediaResponseDTO
+        return photoMessages.stream()
+                .map(message -> new MediaResponseDTO(
+                        message.getMessageId(),
+                        message.getTimestamp().toString(),
+                        message.getContent(),
+                        message.getSenderId()
+                ))
+                .collect(Collectors.toList());
+    }
+
+
     @Transactional
     public PersonalMessage saveMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
 
