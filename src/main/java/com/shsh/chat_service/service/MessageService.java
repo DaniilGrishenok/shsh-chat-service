@@ -37,6 +37,54 @@ public class MessageService {
         return message;
     }
     @Transactional
+    public PersonalMessage saveMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
+
+        PersonalMessage message = new PersonalMessage(idGenerator.generatePersonalMessageId());
+        message.setContent(request.getContent());
+        message.setSenderId(request.getSenderId());
+        message.setChatId(request.getChatId());
+        message.setRecipientId(request.getRecipientId());
+        message.setStatus(MessageStatus.SENT);
+        message.setMessageType(request.getMessageType());
+
+        personalMessageRepository.save(message);
+        return message;
+    }
+
+    @Transactional
+    public PersonalMessage savePhotoPersonalMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
+
+        PersonalMessage photoMessage = new PersonalMessage(idGenerator.generatePersonalMessageId());
+        photoMessage.setContent(request.getContent());
+        photoMessage.setSenderId(request.getSenderId());
+        photoMessage.setChatId(request.getChatId());
+        photoMessage.setRecipientId(request.getRecipientId());
+        photoMessage.setStatus(MessageStatus.SENT);
+        photoMessage.setMessageType("PHOTO");
+
+
+        personalMessageRepository.save(photoMessage);
+        return photoMessage;
+    }
+    @Transactional
+    public PersonalMessage createReplyMessage(String chatId, String senderId, String recipientId,
+                                              String content, String parentMessageId, String messageType) throws NoSuchAlgorithmException {
+        PersonalMessage parentMessage = personalMessageRepository.findById(parentMessageId)
+                .orElseThrow(() -> new RuntimeException("Сообщение-родитель не найдено"));
+
+        PersonalMessage replyMessage = new PersonalMessage(idGenerator.generatePersonalMessageId());
+        replyMessage.setChatId(chatId);
+        replyMessage.setSenderId(senderId);
+        replyMessage.setRecipientId(recipientId);
+        replyMessage.setContent(content);
+        replyMessage.setMessageType(messageType);
+        replyMessage.setStatus(MessageStatus.SENT);
+        replyMessage.setParentMessageId(parentMessageId);
+
+        return personalMessageRepository.save(replyMessage);
+    }
+
+    @Transactional
     public void deleteMessagesByChatId(String chatId) {
         try {
             List<PersonalMessage> messages = personalMessageRepository.findByChatId(chatId);
@@ -53,6 +101,8 @@ public class MessageService {
             throw new RuntimeException("Ошибка при удалении сообщений: " + e.getMessage(), e);
         }
     }
+
+
     @Transactional
     public void deleteMessagesByIds(List<String> messageIds) {
         try {
@@ -75,21 +125,7 @@ public class MessageService {
             throw new RuntimeException("Ошибка при удалении сообщений: " + e.getMessage(), e);
         }
     }
-    @Transactional
-    public PersonalMessage savePhotoPersonalMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
 
-        PersonalMessage photoMessage = new PersonalMessage(idGenerator.generatePersonalMessageId());
-        photoMessage.setContent(request.getContent());
-        photoMessage.setSenderId(request.getSenderId());
-        photoMessage.setChatId(request.getChatId());
-        photoMessage.setRecipientId(request.getRecipientId());
-        photoMessage.setStatus(MessageStatus.SENT);
-        photoMessage.setMessageType("PHOTO");
-
-
-        personalMessageRepository.save(photoMessage);
-        return photoMessage;
-    }
     @Transactional
     public void updatePersonalMessageStatusToDelivered(List<String> messagesIds) {
         validateMessagesIds(messagesIds);

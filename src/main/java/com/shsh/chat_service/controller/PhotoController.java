@@ -38,13 +38,12 @@ public class PhotoController {
     @GetMapping("/download/{chatId}/{fileName}")
     public ResponseEntity<Object> downloadPhoto(@PathVariable String chatId, @PathVariable String fileName) {
         try {
-            // Проверяем наличие файла в S3
+
             if (!photoService.fileExists(chatId, fileName)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ErrorResponseDTO("Файл не найден", HttpStatus.NOT_FOUND.value()));
             }
 
-            // Скачиваем файл
             byte[] fileContent = photoService.downloadFile(chatId, fileName);
             return ResponseEntity.ok(fileContent);
         } catch (IOException e) {

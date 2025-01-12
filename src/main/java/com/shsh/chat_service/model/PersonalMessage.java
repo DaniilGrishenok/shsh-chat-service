@@ -16,6 +16,8 @@ public class PersonalMessage extends Message{
     private String content;
     private String messageType;
     private MessageStatus status;
+    private String parentMessageId;
+
     public PersonalMessage(String messageId){
         super(messageId);
     }

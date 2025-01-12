@@ -12,5 +12,7 @@ public class PersonalMessageRequest {
     private String recipientId;
     private String content;
     private String messageType;
+    private String parentMessageId;
+
 
 }

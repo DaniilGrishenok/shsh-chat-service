@@ -21,10 +21,10 @@ public class PhotoService {
 
     private final S3Service s3Service;
     private final PersonalMessageRepository personalMessageRepository;
+
     public String uploadPhoto(String chatId, MultipartFile file) throws IOException {
         return s3Service.uploadFile(chatId, file);
     }
-
     public byte[] downloadFile(String chatId, String fileName) throws IOException {
         return s3Service.downloadFile(chatId, fileName).readAllBytes();
     }

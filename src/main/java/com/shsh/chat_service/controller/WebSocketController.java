@@ -32,26 +32,36 @@ public class WebSocketController {
     private final MessageService messageService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    @MessageMapping("/ping")
-    public void handlePing(@Payload String ping, Message<?> message) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
-        String userId = accessor.getSessionAttributes() != null
-                ? (String) accessor.getSessionAttributes().get("userId")
-                : "Unknown";
-
-        log.info("Получен ping от пользователя: {}", userId);
-    }
 
     @MessageMapping("/send")
     public void sendMessage(@Payload PersonalMessageRequest messageRequest) throws NoSuchAlgorithmException {
-        PersonalMessage textMessage = messageService.savePersonalMessage(messageRequest);
+        PersonalMessage message = messageService.saveMessage(messageRequest); 
         messagingTemplate.convertAndSendToUser(
-                textMessage.getRecipientId(),
+                message.getRecipientId(),
                 "/queue/messages",
-                textMessage
+                message
         );
     }
+
+    @MessageMapping("/send/reply")
+    public void replyToMessage(@Payload PersonalMessageRequest messageRequest) throws NoSuchAlgorithmException {
+        PersonalMessage replyMessage = messageService.createReplyMessage(
+                messageRequest.getChatId(),
+                messageRequest.getSenderId(),
+                messageRequest.getRecipientId(),
+                messageRequest.getContent(),
+                messageRequest.getParentMessageId(),
+                messageRequest.getMessageType()
+        );
+        messagingTemplate.convertAndSendToUser(
+                replyMessage.getRecipientId(),
+                "/queue/messages",
+                replyMessage
+        );
+    }
+
+
     @MessageMapping("/send/photo")
     public void sendPhotoMessage(@Payload PersonalMessageRequest photoMessageRequest) throws NoSuchAlgorithmException {
 
@@ -61,6 +71,16 @@ public class WebSocketController {
                 "/queue/messages",
                 photoMessage
         );
+    }
+    @MessageMapping("/ping")
+    public void handlePing(@Payload String ping, Message<?> message) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+
+        String userId = accessor.getSessionAttributes() != null
+                ? (String) accessor.getSessionAttributes().get("userId")
+                : "Unknown";
+
+        log.info("Получен ping от пользователя: {}", userId);
     }
     @GetMapping("/home")
     public String index() {
