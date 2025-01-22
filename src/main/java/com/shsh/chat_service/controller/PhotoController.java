@@ -23,12 +23,10 @@ public class PhotoController {
     public ResponseEntity<Object> uploadPhoto(@PathVariable String chatId, @RequestParam("file") MultipartFile file) {
 
         try {
-            // Загружаем файл
             String fileUrl = photoService.uploadPhoto(chatId, file);
             FileResponseDTO response = new FileResponseDTO(fileUrl, file.getOriginalFilename());
             return ResponseEntity.ok(response);
         } catch (IOException e) {
-            // Если ошибка при загрузке файла, возвращаем ошибку
             ErrorResponseDTO error = new ErrorResponseDTO("Ошибка при загрузке файла: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
@@ -43,7 +41,6 @@ public class PhotoController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ErrorResponseDTO("Файл не найден", HttpStatus.NOT_FOUND.value()));
             }
-
             byte[] fileContent = photoService.downloadFile(chatId, fileName);
             return ResponseEntity.ok(fileContent);
         } catch (IOException e) {

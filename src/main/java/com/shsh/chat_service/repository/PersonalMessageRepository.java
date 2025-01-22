@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PersonalMessageRepository extends MongoRepository<PersonalMessage, String> {
@@ -18,5 +19,10 @@ public interface PersonalMessageRepository extends MongoRepository<PersonalMessa
     void updateStatusByIdIn(List<String> ids, MessageStatus status);
     List<PersonalMessage> findByChatId(String chatId);
     List<PersonalMessage> findByChatIdAndMessageType(String chatId, String messageType);
+
+    //Optional<PersonalMessage> findByMessageId(String messageId);
+    @Query("{ 'messageId': ?0 }")
+    Optional<PersonalMessage> findByMessageId(String messageId);
+
 
 }

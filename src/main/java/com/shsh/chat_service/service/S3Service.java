@@ -23,8 +23,6 @@ public class S3Service {
     private final AmazonS3 s3Client;
     private static final Dotenv dotenv = Dotenv.load();
 
-
-    // Инициализируем переменные окружения через Dotenv
     private String ACCESS_KEY = dotenv.get("AWS_ACCESS_KEY");
     private String SECRET_KEY = dotenv.get("AWS_SECRET_KEY");
     private String ENDPOINT = dotenv.get("AWS_ENDPOINT");

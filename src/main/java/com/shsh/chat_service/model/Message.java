@@ -3,6 +3,7 @@ package com.shsh.chat_service.model;
 import jakarta.persistence.Id;
 import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -14,9 +15,8 @@ public abstract class Message {
     private String chatId;
     private LocalDateTime timestamp;
 
-    public Message(String messageId){
-        this.timestamp = LocalDateTime.now();
-        this.messageId = messageId;
+    public Message(){
+
     }
 
 }

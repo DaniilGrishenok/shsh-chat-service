@@ -2,11 +2,13 @@ package com.shsh.chat_service.service;
 
 import com.shsh.chat_service.dto.MediaResponseDTO;
 import com.shsh.chat_service.dto.PersonalMessageRequest;
+import com.shsh.chat_service.dto.PersonalMessageResponse;
 import com.shsh.chat_service.model.MessageStatus;
 import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.repository.PersonalMessageRepository;
 import com.shsh.chat_service.util.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,15 +16,37 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-
 @RequiredArgsConstructor
+@Log4j2
 public class MessageService {
-    private static final Logger log = LoggerFactory.getLogger(MessageService.class);
+
     private final PersonalMessageRepository personalMessageRepository;
     private final IdGeneratorService idGenerator;
+
+    @Transactional(readOnly = true)
+    public PersonalMessageResponse getMessageById(String messageId) {
+
+        PersonalMessage message = personalMessageRepository.findByMessageId(messageId)
+                .orElseThrow(() -> new NoSuchElementException("Message with ID " + messageId + " not found"));
+
+
+        return new PersonalMessageResponse(
+                message.getMessageId(),
+                message.getChatId(),
+                message.getSenderId(),
+                message.getRecipientId(),
+                message.getContent(),
+                message.getMessageType(),
+                message.getTimestamp().toString(),
+                message.getStatus().toString(),
+                message.getParentMessageId()
+        );
+    }
     @Transactional
     public PersonalMessage savePersonalMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {
 
@@ -40,10 +64,9 @@ public class MessageService {
     }
     @Transactional(readOnly = true)
     public List<MediaResponseDTO> getPhotosByChatId(String chatId) {
-        // Извлекаем только сообщения с типом PHOTO
         List<PersonalMessage> photoMessages = personalMessageRepository.findByChatIdAndMessageType(chatId, "PHOTO");
 
-        // Конвертируем их в MediaResponseDTO
+
         return photoMessages.stream()
                 .map(message -> new MediaResponseDTO(
                         message.getMessageId(),
@@ -184,4 +207,7 @@ public class MessageService {
     public List<PersonalMessage> getAllMeвssagesInChat(String chatId) {
         return personalMessageRepository.findByChatId(chatId);
     }
+
+
+
 }

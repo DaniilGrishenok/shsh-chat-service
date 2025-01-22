@@ -22,6 +22,7 @@ import java.util.List;
 public class ChatController {
     private final ChatService chatService;
     private final MessageService messageService;
+
     @GetMapping("/{chatId}/photos")
     public ResponseEntity<List<MediaResponseDTO>> getChatPhotos(@PathVariable String chatId) {
         try {
@@ -41,8 +42,9 @@ public class ChatController {
                     .body(null);
         }
     }
+
     @PostMapping("/createOneToOneChat")
-    public ResponseEntity<CreateOneToOneChatResponse> createOneToOneChat(@RequestBody CreateOneToOneChatRequest request){
+    public ResponseEntity<CreateOneToOneChatResponse> createOneToOneChat(@RequestBody CreateOneToOneChatRequest request) {
         var firstUserId = request.getFirstUserId();
         var secondUserId = request.getSecondUserId();
         CreateOneToOneChatResponse response = chatService.createPersonalChat(firstUserId, secondUserId);
@@ -64,12 +66,11 @@ public class ChatController {
                     .body("Ошибка при удалении чата: " + e.getMessage());
         }
     }
+
     @GetMapping("/allChats")
     public ResponseEntity<List<ChatDto>> getChatsForUser(@RequestParam String userId) {
         List<ChatDto> chats = chatService.getAllChatsForUser(userId);
         return ResponseEntity.ok(chats);
     }
-
-
 
 }

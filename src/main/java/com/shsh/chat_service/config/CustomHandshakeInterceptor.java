@@ -9,6 +9,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
+
 @Component
 @Log4j2
 public class CustomHandshakeInterceptor implements HandshakeInterceptor {

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,8 +36,9 @@ public class ChatService {
                 return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Один или оба пользователя не существуют.");
             }
 
-            if (personalChatRepository.findByUserIds(firstUserId, secondUserId).isPresent()) {
-                return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Чат уже существует.");
+            Optional<PersonalChat> existingChat = personalChatRepository.findByUserIds(firstUserId, secondUserId);
+            if (existingChat.isPresent()) {
+                return new CreateOneToOneChatResponse(existingChat.get().getId(), firstUserId, secondUserId, false, "Чат с этими пользователями уже существует!");
             }
 
             // Генерация ID чата
@@ -73,7 +76,11 @@ public class ChatService {
             throw new RuntimeException("Ошибка при удалении чата: " + e.getMessage(), e);
         }
     }
-
+    public Set<String> getChatParticipants(String chatId) {
+        return personalChatRepository.findByChatId(chatId)
+                .map(chat -> Set.of(chat.getUser1Id(), chat.getUser2Id()))
+                .orElseThrow(() -> new RuntimeException("Chat not found"));
+    }
 
     private ChatDto convertToChatDto(PersonalChat chat) {
         return new ChatDto(

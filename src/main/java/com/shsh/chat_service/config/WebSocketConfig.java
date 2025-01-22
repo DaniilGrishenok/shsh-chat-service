@@ -17,15 +17,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final RedisTemplate<String, String> redisTemplate;
 
     @Autowired
-    public WebSocketConfig( RedisTemplate<String, String> redisTemplate) {
+    public WebSocketConfig(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-            config.enableSimpleBroker("/topic", "/queue", "/user");
-            config.setUserDestinationPrefix("/user");
-            config.setApplicationDestinationPrefixes("/app");
+        config.enableSimpleBroker("/topic", "/queue", "/user");
+        config.setUserDestinationPrefix("/user");
+        config.setApplicationDestinationPrefixes("/app");
     }
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
@@ -39,6 +41,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
+
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
         registration.setSendTimeLimit(15000);

@@ -1,11 +1,15 @@
 package com.shsh.chat_service.controller;
 
+import com.shsh.chat_service.dto.DeleteMessageRequest;
 import com.shsh.chat_service.dto.PersonalMessageRequest;
+import com.shsh.chat_service.model.ChatEvent;
 import com.shsh.chat_service.model.MessageStatus;
 import com.shsh.chat_service.model.PersonalMessage;
+import com.shsh.chat_service.service.ChatService;
 import com.shsh.chat_service.service.MessageService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.*;
@@ -23,6 +27,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,21 +36,34 @@ public class WebSocketController {
 
     private final MessageService messageService;
     private final SimpMessageSendingOperations messagingTemplate;
-
-
+    private final ChatService chatService;
 
     @MessageMapping("/send")
-    public void sendMessage(@Payload PersonalMessageRequest messageRequest) throws NoSuchAlgorithmException {
+    @SneakyThrows
+    public void sendMessage(@Payload PersonalMessageRequest messageRequest)  {
         PersonalMessage message = messageService.saveMessage(messageRequest); 
         messagingTemplate.convertAndSendToUser(
                 message.getRecipientId(),
                 "/queue/messages",
                 message
         );
+        sendToParticipants(message);
     }
 
+    private void sendToParticipants(PersonalMessage messageRequest) {
+        Set<String> participants = chatService.getChatParticipants(messageRequest.getChatId());
+
+        participants.forEach(userId -> {
+            messagingTemplate.convertAndSendToUser(
+                    userId,
+                    "/queue/events",
+                    messageRequest
+            );
+        });
+    }
     @MessageMapping("/send/reply")
-    public void replyToMessage(@Payload PersonalMessageRequest messageRequest) throws NoSuchAlgorithmException {
+    @SneakyThrows
+    public void replyToMessage(@Payload PersonalMessageRequest messageRequest) {
         PersonalMessage replyMessage = messageService.createReplyMessage(
                 messageRequest.getChatId(),
                 messageRequest.getSenderId(),
@@ -63,7 +81,8 @@ public class WebSocketController {
 
 
     @MessageMapping("/send/photo")
-    public void sendPhotoMessage(@Payload PersonalMessageRequest photoMessageRequest) throws NoSuchAlgorithmException {
+    @SneakyThrows
+    public void sendPhotoMessage(@Payload PersonalMessageRequest photoMessageRequest) {
 
         PersonalMessage photoMessage = messageService.savePhotoPersonalMessage(photoMessageRequest);
         messagingTemplate.convertAndSendToUser(
