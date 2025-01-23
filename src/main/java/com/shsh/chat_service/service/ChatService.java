@@ -77,7 +77,7 @@ public class ChatService {
         }
     }
     public Set<String> getChatParticipants(String chatId) {
-        return personalChatRepository.findByChatId(chatId)
+        return personalChatRepository.findById(chatId)
                 .map(chat -> Set.of(chat.getUser1Id(), chat.getUser2Id()))
                 .orElseThrow(() -> new RuntimeException("Chat not found"));
     }

@@ -1,6 +1,7 @@
 package com.shsh.chat_service.controller;
 
 import com.shsh.chat_service.dto.DeleteMessageRequest;
+import com.shsh.chat_service.dto.ErrorResponse;
 import com.shsh.chat_service.dto.PersonalMessageRequest;
 import com.shsh.chat_service.model.ChatEvent;
 import com.shsh.chat_service.model.MessageStatus;
@@ -25,7 +26,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -42,11 +45,11 @@ public class WebSocketController {
     @SneakyThrows
     public void sendMessage(@Payload PersonalMessageRequest messageRequest)  {
         PersonalMessage message = messageService.saveMessage(messageRequest); 
-        messagingTemplate.convertAndSendToUser(
-                message.getRecipientId(),
-                "/queue/messages",
-                message
-        );
+//        messagingTemplate.convertAndSendToUser(
+//                message.getRecipientId(),
+//                "/queue/messages",
+//                message
+//        );
         sendToParticipants(message);
     }
 
