@@ -1,12 +1,15 @@
 package com.shsh.chat_service.service;
 
+import com.shsh.chat_service.dto.EditMessageRequest;
 import com.shsh.chat_service.dto.MediaResponseDTO;
 import com.shsh.chat_service.dto.PersonalMessageRequest;
 import com.shsh.chat_service.dto.PersonalMessageResponse;
+import com.shsh.chat_service.model.Message;
 import com.shsh.chat_service.model.MessageStatus;
 import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.repository.PersonalMessageRepository;
 import com.shsh.chat_service.util.IdGeneratorService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.slf4j.Logger;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -28,13 +32,36 @@ public class MessageService {
     private final PersonalMessageRepository personalMessageRepository;
     private final IdGeneratorService idGenerator;
 
+    @Transactional
+    public PersonalMessage editMessage(EditMessageRequest request) {
+        PersonalMessage message = personalMessageRepository.findById(request.getMessageId())
+                .orElseThrow(() -> new EntityNotFoundException("Сообщение не найдено"));
+
+        // Проверка прав
+        if (!message.getSenderId().equals(request.getSenderId())) {
+            throw new SecurityException("Только автор может редактировать сообщение");
+        }
+
+        // Проверка типа сообщения
+        if ("PHOTO".equals(message.getMessageType())) {
+            throw new UnsupportedOperationException("Фото-сообщения нельзя редактировать");
+        }
+
+        // Обновление данных
+        message.setContent(request.getNewContent());
+        message.setEdited(true);
+        message.setEditedAt(LocalDateTime.now());
+
+        return personalMessageRepository.save(message);
+    }
+
     @Transactional(readOnly = true)
     public PersonalMessageResponse getMessageById(String messageId) {
 
         PersonalMessage message = personalMessageRepository.findByMessageId(messageId)
                 .orElseThrow(() -> new NoSuchElementException("Message with ID " + messageId + " not found"));
 
-
+//todo: оптимизировать метод
         return new PersonalMessageResponse(
                 message.getMessageId(),
                 message.getChatId(),
@@ -125,6 +152,9 @@ public class MessageService {
 
         return personalMessageRepository.save(replyMessage);
     }
+
+
+
 
     @Transactional
     public void deleteMessagesByChatId(String chatId) {

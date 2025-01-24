@@ -21,6 +21,8 @@ public class PersonalMessage{
     private String messageType;
     private MessageStatus status;
     private String parentMessageId;
+    private boolean isEdited;
+    private LocalDateTime editedAt;
     public PersonalMessage(String messageId){
         this.timestamp = LocalDateTime.now();
         this.messageId = messageId;

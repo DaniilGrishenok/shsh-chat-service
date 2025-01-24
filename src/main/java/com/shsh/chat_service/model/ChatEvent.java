@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -24,6 +25,6 @@ public class ChatEvent {
     private String chatId;
     private String initiatorId;
     private String targetMessageId;
-    private String payload;
+    private Map<String, Object> payload;
     private LocalDateTime timestamp;
 }
