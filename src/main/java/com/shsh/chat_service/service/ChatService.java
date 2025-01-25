@@ -55,6 +55,9 @@ public class ChatService {
             return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Не удалось создать личный чат: " + e.getMessage());
         }
     }
+    public boolean isUserParticipant(String chatId, String userId) {
+        return getChatParticipants(chatId).contains(userId);
+    }
 
     public List<ChatDto> getAllChatsForUser(String userId) {
         List<PersonalChat> chats = personalChatRepository.findByUser1IdOrUser2Id(userId, userId);

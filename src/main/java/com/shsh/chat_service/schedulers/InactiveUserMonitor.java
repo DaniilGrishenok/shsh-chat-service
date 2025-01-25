@@ -18,13 +18,10 @@ public class InactiveUserMonitor {
         this.redisTemplate = redisTemplate;
     }
 
-    @Scheduled(fixedRate = 20000)
+    @Scheduled(fixedRate = 16000)
     public void checkInactiveUsers() {
-        log.info("Запуск проверки на неактивных пользователей...");
-
         Set<String> keys = redisTemplate.keys("user:*:lastPingAt");
         if (keys == null || keys.isEmpty()) {
-            log.info("Неактивные пользователи отсутствуют.");
             return;
         }
 
@@ -34,12 +31,10 @@ public class InactiveUserMonitor {
                 String lastPingAt = redisTemplate.opsForValue().get(key);
                 if (lastPingAt != null) {
                     long lastPingTime = Long.parseLong(lastPingAt);
-                    // Лимит неактивности (30 секунд)
-                    long INACTIVITY_LIMIT_MS = 30000;
+                    long INACTIVITY_LIMIT_MS = 15000;
                     if (currentTime - lastPingTime > INACTIVITY_LIMIT_MS) {
                         String userId = key.split(":")[1];
                         String userStatus = redisTemplate.opsForValue().get("user:" + userId);
-                        // Если пользователь еще не помечен как offline, то меняем статус
                         if (!"offline".equals(userStatus)) {
                             redisTemplate.opsForValue().set("user:" + userId, "offline");
                             log.info("Пользователь {} помечен как offline из-за неактивности.", userId);
