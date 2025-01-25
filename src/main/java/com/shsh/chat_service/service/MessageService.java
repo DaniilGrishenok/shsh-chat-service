@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -31,6 +32,59 @@ public class MessageService {
 
     private final PersonalMessageRepository personalMessageRepository;
     private final IdGeneratorService idGenerator;
+
+
+    public PersonalMessageResponse convertToResponse(PersonalMessage message) {
+        return PersonalMessageResponse.builder()
+                .messageId(message.getMessageId())
+                .chatId(message.getChatId())
+                .senderId(message.getSenderId())
+                .recipientId(message.getRecipientId())
+                .content(message.getContent())
+                .messageType(message.getMessageType())
+                .timestamp(message.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME))
+                .status(message.getStatus().name())
+                .parentMessageId(message.getParentMessageId())
+                .build();
+    }
+    @Transactional
+    public void markAsDelivered(List<String> messageIds, String recipientId) {
+        List<PersonalMessage> messages = personalMessageRepository.findAllById(messageIds);
+
+        messages.stream()
+                .filter(msg -> msg.getStatus() == MessageStatus.SENT)
+                .filter(msg -> msg.getRecipientId().equals(recipientId))
+                .forEach(msg -> {
+                    msg.setStatus(MessageStatus.DELIVERED);
+                    msg.setDeliveredAt(LocalDateTime.now());
+                });
+
+        personalMessageRepository.saveAll(messages);
+    }
+
+    @Transactional
+    public List<String> markAsRead(List<String> messageIds, String recipientId) {
+        List<PersonalMessage> messages = personalMessageRepository.findAllById(messageIds);
+
+        List<PersonalMessage> filtered = messages.stream()
+                .filter(msg ->
+                        msg.getRecipientId().equals(recipientId) &&
+                                (msg.getStatus() == MessageStatus.SENT || msg.getStatus() == MessageStatus.DELIVERED)
+                )
+                .peek(msg -> {
+                    if (msg.getStatus() == MessageStatus.SENT) {
+                        msg.setDeliveredAt(LocalDateTime.now());
+                    }
+                    msg.setStatus(MessageStatus.READ);
+                    msg.setReadAt(LocalDateTime.now());
+                })
+                .collect(Collectors.toList());
+
+        personalMessageRepository.saveAll(filtered);
+        return filtered.stream()
+                .map(PersonalMessage::getMessageId)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public PersonalMessage editMessage(EditMessageRequest request) {
@@ -56,23 +110,11 @@ public class MessageService {
     }
 
     @Transactional(readOnly = true)
-    public PersonalMessageResponse getMessageById(String messageId) {
+    public PersonalMessage getMessageById(String messageId) {
 
-        PersonalMessage message = personalMessageRepository.findByMessageId(messageId)
+        return personalMessageRepository.findByMessageId(messageId)
                 .orElseThrow(() -> new NoSuchElementException("Message with ID " + messageId + " not found"));
 
-//todo: оптимизировать метод
-        return new PersonalMessageResponse(
-                message.getMessageId(),
-                message.getChatId(),
-                message.getSenderId(),
-                message.getRecipientId(),
-                message.getContent(),
-                message.getMessageType(),
-                message.getTimestamp().toString(),
-                message.getStatus().toString(),
-                message.getParentMessageId()
-        );
     }
     @Transactional
     public PersonalMessage savePersonalMessage(PersonalMessageRequest request) throws NoSuchAlgorithmException {

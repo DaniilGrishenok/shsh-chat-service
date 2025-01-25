@@ -20,9 +20,11 @@ public interface PersonalMessageRepository extends MongoRepository<PersonalMessa
     List<PersonalMessage> findByChatId(String chatId);
     List<PersonalMessage> findByChatIdAndMessageType(String chatId, String messageType);
 
-    //Optional<PersonalMessage> findByMessageId(String messageId);
+    List<PersonalMessage> findByRecipientIdAndStatus(String recipientId, MessageStatus status);
+
     @Query("{ 'messageId': ?0 }")
     Optional<PersonalMessage> findByMessageId(String messageId);
 
-
+    @Query("{ 'messageId' : { $in: ?0 } }")
+    List<PersonalMessage> findAllByIds(List<String> messageIds);
 }

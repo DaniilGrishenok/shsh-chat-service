@@ -97,12 +97,9 @@ public class WebSocketController {
     @MessageMapping("/ping")
     public void handlePing(@Payload String ping, Message<?> message) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-
         String userId = accessor.getSessionAttributes() != null
                 ? (String) accessor.getSessionAttributes().get("userId")
                 : "Unknown";
-
-        log.info("Получен ping от пользователя: {}", userId);
     }
     @GetMapping("/home")
     public String index() {

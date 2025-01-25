@@ -1,7 +1,9 @@
 package com.shsh.chat_service.controller;
 
 import com.shsh.chat_service.dto.PersonalMessageResponse;
+import com.shsh.chat_service.model.MessageStatus;
 import com.shsh.chat_service.model.PersonalMessage;
+import com.shsh.chat_service.repository.PersonalMessageRepository;
 import com.shsh.chat_service.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -20,14 +22,22 @@ import java.util.NoSuchElementException;
 public class MessageController {
 
  private final MessageService messageService;
+ private final PersonalMessageRepository personalMessageRepository;
+
+    @GetMapping("/getSentMessages")
+    public ResponseEntity<List<PersonalMessage>> getUnreadMessages(
+            @RequestParam String recipientId) {
+        List<PersonalMessage> messages = personalMessageRepository
+                .findByRecipientIdAndStatus(recipientId, MessageStatus.SENT);
+        return ResponseEntity.ok(messages);
+    }
     @GetMapping("/{messageId}")
     public ResponseEntity<?> getMessageById(@PathVariable String messageId) {
         try {
 
-            PersonalMessageResponse messageDTO = messageService.getMessageById(messageId);
+            PersonalMessage messageDTO = messageService.getMessageById(messageId);
             return ResponseEntity.ok(messageDTO);
         } catch (NoSuchElementException e) {
-            log.error("Сообщение с ID {} не найдено: {}", messageId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Message not found", "messageId", messageId));
         } catch (Exception e) {
@@ -64,20 +74,5 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
-    @GetMapping("/getSentMessages")
-    public ResponseEntity<List<PersonalMessage>> getSentMessagesInPersonalChat(
-            @RequestParam String userId) {
-        List<PersonalMessage> messages = messageService.getAllMessagesInChat(userId);
-        return ResponseEntity.ok(messages);
-    }
 
-    @PutMapping("/status/read")
-    public ResponseEntity<String> updateMessagesToRead(@RequestBody List<String> messageIds) {
-        try {
-            messageService.updatePersonalMessageStatusToRead(messageIds);
-            return ResponseEntity.ok("Message statuses updated to READ");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Failed to update message statuses to READ");
-        }
-    }
 }
