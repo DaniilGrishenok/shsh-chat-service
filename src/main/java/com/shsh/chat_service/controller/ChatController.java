@@ -72,5 +72,9 @@ public class ChatController {
         List<ChatDto> chats = chatService.getAllChatsForUser(userId);
         return ResponseEntity.ok(chats);
     }
-
+    @GetMapping("/v2/allChats")
+    public ResponseEntity<List<?>> getChatsForUserV2(@RequestParam String userId) {
+        var chats = chatService.getAllChatsForUser1(userId);
+        return ResponseEntity.ok(chats);
+    }
 }

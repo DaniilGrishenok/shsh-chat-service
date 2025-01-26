@@ -1,11 +1,14 @@
 package com.shsh.chat_service.service;
 
 
+import com.shsh.chat_service.dto.ChatAndLastMessageDTO;
 import com.shsh.chat_service.dto.ChatDto;
 import com.shsh.chat_service.dto.CreateOneToOneChatResponse;
 import com.shsh.chat_service.exeptions.ChatCreationException;
 import com.shsh.chat_service.model.PersonalChat;
+import com.shsh.chat_service.model.PersonalMessage;
 import com.shsh.chat_service.repository.PersonalChatRepository;
+import com.shsh.chat_service.repository.PersonalMessageRepository;
 import com.shsh.chat_service.util.IdGeneratorService;
 import com.shsh.chat_service.util.UserProfileClient;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +33,7 @@ public class ChatService {
     private final UserProfileClient userProfileClient;
     private final MessageService messageService;
     private final PhotoService photoService;
+    private final PersonalMessageRepository personalMessageRepository;
     @Transactional
     public CreateOneToOneChatResponse createPersonalChat(String firstUserId, String secondUserId) {
         try {
@@ -55,6 +61,7 @@ public class ChatService {
             return new CreateOneToOneChatResponse(null, firstUserId, secondUserId, false, "Не удалось создать личный чат: " + e.getMessage());
         }
     }
+
     public boolean isUserParticipant(String chatId, String userId) {
         return getChatParticipants(chatId).contains(userId);
     }
@@ -65,6 +72,44 @@ public class ChatService {
                 .map(this::convertToChatDto)
                 .collect(Collectors.toList());
     }
+    public List<ChatAndLastMessageDTO> getAllChatsForUser1(String userId) {
+        List<PersonalChat> chats = personalChatRepository.findByUser1IdOrUser2Id(userId, userId);
+
+        List<String> chatIds = chats.stream()
+                .map(PersonalChat::getId)
+                .collect(Collectors.toList());
+
+        Map<String, PersonalMessage> lastMessages = personalMessageRepository
+                .findLastMessagesByChatIds(chatIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        PersonalMessage::getChatId,
+                        Function.identity()
+                ));
+
+        return chats.stream()
+                .map(chat -> convertToChatDto(chat, lastMessages.get(chat.getId())))
+                .collect(Collectors.toList());
+    }
+    private ChatAndLastMessageDTO convertToChatDto(PersonalChat chat, PersonalMessage lastMessage) {
+        ChatAndLastMessageDTO dto = new ChatAndLastMessageDTO();
+        dto.setId(chat.getId());
+        dto.setUser1Id(chat.getUser1Id());
+        dto.setUser2Id(chat.getUser2Id());
+        dto.setCreatedAt(chat.getCreatedAt());
+
+        if (lastMessage != null) {
+            dto.setLastMessage(new ChatAndLastMessageDTO.MessagePreview(
+                    lastMessage.getContent(),
+                    lastMessage.getTimestamp(),
+                    lastMessage.getStatus(),
+                    lastMessage.getMessageType()
+            ));
+        }
+
+        return dto;
+    }
+
     @Transactional
     public void deleteChat(String chatId) {
         try {
@@ -79,6 +124,7 @@ public class ChatService {
             throw new RuntimeException("Ошибка при удалении чата: " + e.getMessage(), e);
         }
     }
+
     public Set<String> getChatParticipants(String chatId) {
         return personalChatRepository.findById(chatId)
                 .map(chat -> Set.of(chat.getUser1Id(), chat.getUser2Id()))
